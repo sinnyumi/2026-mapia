@@ -584,11 +584,10 @@ function generateGameData() {
     for(let i=0;i<(parseInt(document.getElementById('num-skill2').value)||0);i++) skillsPool.push("dǎ pīngpāngqiú");
     for(let i=0;i<(parseInt(document.getElementById('num-skill3').value)||0);i++) skillsPool.push("dǎ lánqiú");
 
-    const jobsDefs = [];
-    "yùndòngyuán",
-    "yīshēng",
-    "wǎnghóng",
-    "zuòjiā"
+    // 🔧 FIX: 장래희망 정의 배열 — 이전 버전은 "const jobsDefs = [];" 로 닫혀버리고
+    // 그 아래 문자열들이 배열 밖의 의미없는 구문으로 떨어져 나가 jobsDefs가 항상 빈 배열이었음.
+    // 아래처럼 배열 리터럴 안에 4개 값을 전부 넣어야 정상 동작함.
+    const jobsDefs = ["yùndòngyuán", "yīshēng", "wǎnghóng", "zuòjiā"];
 
     let jobsPool = [];
     for(let i=0;i<(parseInt(document.getElementById('num-job1').value)||0);i++) jobsPool.push(jobsDefs[0]);
