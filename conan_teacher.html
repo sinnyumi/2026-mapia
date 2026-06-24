@@ -584,12 +584,12 @@ function generateGameData() {
     for(let i=0;i<(parseInt(document.getElementById('num-skill2').value)||0);i++) skillsPool.push("dǎ pīngpāngqiú");
     for(let i=0;i<(parseInt(document.getElementById('num-skill3').value)||0);i++) skillsPool.push("dǎ lánqiú");
 
-    const jobsDefs = [
+    const jobsDefs = [];
     "yùndòngyuán",
     "yīshēng",
     "wǎnghóng",
     "zuòjiā"
-];
+
     let jobsPool = [];
     for(let i=0;i<(parseInt(document.getElementById('num-job1').value)||0);i++) jobsPool.push(jobsDefs[0]);
     for(let i=0;i<(parseInt(document.getElementById('num-job2').value)||0);i++) jobsPool.push(jobsDefs[1]);
