@@ -562,6 +562,34 @@ function generateGameData() {
     if (names.length < 3) { alert('최소 3명 이상의 학생을 기입하세요.'); return; }
     if (names.length < mafiaCnt + policeCnt) { alert('학생 수가 마피아+경찰 수보다 적습니다.'); return; }
 
+    // ── 🔧 단서 인원수 합계 검증 (학생 수와 정확히 일치해야 진행 가능) ──
+    const totalStudents = names.length;
+    const gradeSum = (parseInt(document.getElementById('num-grade1').value)||0)
+                    + (parseInt(document.getElementById('num-grade2').value)||0)
+                    + (parseInt(document.getElementById('num-grade3').value)||0);
+    const hobbySum = (parseInt(document.getElementById('num-hobby1').value)||0)
+                    + (parseInt(document.getElementById('num-hobby2').value)||0)
+                    + (parseInt(document.getElementById('num-hobby3').value)||0)
+                    + (parseInt(document.getElementById('num-hobby4').value)||0);
+    const skillSum = (parseInt(document.getElementById('num-skill1').value)||0)
+                    + (parseInt(document.getElementById('num-skill2').value)||0)
+                    + (parseInt(document.getElementById('num-skill3').value)||0);
+    const jobSum = (parseInt(document.getElementById('num-job1').value)||0)
+                 + (parseInt(document.getElementById('num-job2').value)||0)
+                 + (parseInt(document.getElementById('num-job3').value)||0)
+                 + (parseInt(document.getElementById('num-job4').value)||0);
+
+    const mismatches = [];
+    if (gradeSum !== totalStudents) mismatches.push(`🏫 학년별 합계 ${gradeSum}명 (학생 수 ${totalStudents}명과 불일치, 차이 ${gradeSum - totalStudents > 0 ? '+' : ''}${gradeSum - totalStudents})`);
+    if (hobbySum !== totalStudents) mismatches.push(`🎨 취미별 합계 ${hobbySum}명 (학생 수 ${totalStudents}명과 불일치, 차이 ${hobbySum - totalStudents > 0 ? '+' : ''}${hobbySum - totalStudents})`);
+    if (skillSum !== totalStudents) mismatches.push(`⚡ 능력별 합계 ${skillSum}명 (학생 수 ${totalStudents}명과 불일치, 차이 ${skillSum - totalStudents > 0 ? '+' : ''}${skillSum - totalStudents})`);
+    if (jobSum !== totalStudents) mismatches.push(`👔 장래희망별 합계 ${jobSum}명 (학생 수 ${totalStudents}명과 불일치, 차이 ${jobSum - totalStudents > 0 ? '+' : ''}${jobSum - totalStudents})`);
+
+    if (mismatches.length > 0) {
+        alert(`❌ 단서 인원수가 학생 수(${totalStudents}명)와 정확히 일치하지 않습니다.\n\n` + mismatches.join('\n') + `\n\n각 단서 카테고리(학년/취미/능력/장래희망)의 합계를 학생 수와 똑같이 맞춘 뒤 다시 시도해주세요.`);
+        return;
+    }
+
     // ── 힌트 설정 읽기 ──────────────────────────────────────────
     const r1Hobby = document.getElementById('hint-r1-hobby').value;   // 마피아 1명이 가져야 할 취미
     const r2Hobby = document.getElementById('hint-r2-hobby').value;   // r2 힌트에서 언급되는 취미
