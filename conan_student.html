@@ -533,8 +533,8 @@
             let nameFilled = 0;
             targetSelects.forEach(s => { if(s.value) nameFilled++; });
 
-            if(nameFilled < 3 || selectedSuspects.length < 1) { 
-                alert("최소 3명 이상의 추리 기록을 작성하고 하단 캐릭터 카드 중에서 의심되는 용의자를 1명 이상 선택해 주세요!"); 
+            if(nameFilled < 1 || selectedSuspects.length < 1) { 
+                alert("최소 1명 이상의 추리 기록을 작성하고 하단 캐릭터 카드 중에서 의심되는 용의자를 1명 이상 선택해 주세요!"); 
                 return; 
             }
             db.ref(`rawVotes/${myName}`).set(selectedSuspects);
