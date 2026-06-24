@@ -585,10 +585,10 @@ function generateGameData() {
     for(let i=0;i<(parseInt(document.getElementById('num-skill3').value)||0);i++) skillsPool.push("dǎ lánqiú");
 
     const jobsDefs = [
-        { cn:"运动选手", py:"yùndòng xuǎnshǒu", ko:"yùndòngyuán" },
-        { cn:"医生", py:"yīshēng", ko:"yīshēng" },
-        { cn:"网络红人", py:"wǎngluò hóngrén", ko:"wǎnghóng" },
-        { cn:"作家", py:"zuòjiā", ko:"zuòjiā" }
+        { "yùndòngyuán" },
+        { "yīshēng" },
+        { "wǎnghóng" },
+        { "zuòjiā" }
     ];
     let jobsPool = [];
     for(let i=0;i<(parseInt(document.getElementById('num-job1').value)||0);i++) jobsPool.push(jobsDefs[0]);
