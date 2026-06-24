@@ -385,7 +385,7 @@
                 document.querySelectorAll('.reveal-grade').forEach(el => el.innerText = myData.profile.grade);
                 document.querySelectorAll('.reveal-hobby').forEach(el => el.innerText = myData.profile.hobby);
                 document.querySelectorAll('.reveal-skill').forEach(el => el.innerText = myData.profile.skill);
-                document.querySelectorAll('.reveal-job').forEach(el => el.innerHTML = `${myData.profile.job.ko} <br><span class="text-[#e0a96d] font-bold font-mono text-[10px]">[${myData.profile.job.cn} / ${myData.profile.job.py}]</span>`);
+                document.querySelectorAll('.reveal-job').forEach(el => el.innerText = myData.profile.job);
 
                 const title = document.getElementById('role-title');
                 const tip = document.getElementById('role-tip');
@@ -427,7 +427,7 @@
             document.querySelectorAll('.reveal-grade-pin').forEach(el => el.innerText = myData.profile.grade);
             document.querySelectorAll('.reveal-hobby-pin').forEach(el => el.innerText = myData.profile.hobby);
             document.querySelectorAll('.reveal-skill-pin').forEach(el => el.innerText = myData.profile.skill);
-            document.querySelectorAll('.reveal-job-pin').forEach(el => el.innerText = `${myData.profile.job.ko} [${myData.profile.job.cn}/${myData.profile.job.py}]`);
+            document.querySelectorAll('.reveal-job-pin').forEach(el => el.innerText = myData.profile.job);
         }
 
         function rebuildInterviewSheet() {
@@ -596,7 +596,7 @@
                 { type: '학년', value: profile.grade },
                 { type: '취미', value: profile.hobby },
                 { type: '능력', value: profile.skill },
-                { type: '장래희망', value: `${profile.job.ko} [${profile.job.cn}/${profile.job.py}]` }
+                { type: '장래희망', value: profile.job }
             ];
             const picked = clueTypes[Math.floor(Math.random() * clueTypes.length)];
 
