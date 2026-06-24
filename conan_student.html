@@ -1,1302 +1,677 @@
 <!DOCTYPE html>
-
 <html lang="ko">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
     <title>🕵️‍♂️ 명탐정 코난: 클래스 마피아 수사 수첩</title>
-
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Pretendard:wght@700;900&display=swap" rel="stylesheet">
-
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
     <style>
-
         body { 
-
             font-family: 'Pretendard', sans-serif; 
-
             background: radial-gradient(circle at top, #15243a 0%, #090e15 100%);
-
             color: #f0f6fc; 
-
             -webkit-font-smoothing: antialiased;
-
         }
-
         .font-orbitron { font-family: 'Orbitron', sans-serif; }
-
         @keyframes scan { 0%, 100% { top: 0%; opacity: 0.3; } 50% { top: 100%; opacity: 1; } }
-
         .scanner-line { animation: scan 2s infinite linear; }
-
         select {
-
             appearance: none;
-
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0a96d' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-
             background-repeat: no-repeat;
-
             background-position: right 0.6rem center;
-
             background-size: 1.1em;
-
             padding-right: 2rem !important;
-
         }
-
         .char-card-selected {
-
             border-color: #ef4444 !important;
-
             background-color: rgba(239, 68, 68, 0.15) !important;
-
             box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-
         }
-
         .round-pill{
-
             display:inline-flex; align-items:center; gap:6px;
-
             background:linear-gradient(135deg,#1b2b42,#223956);
-
             border:2px solid #e0a96d; color:#f8d36a;
-
             padding:4px 14px; border-radius:999px;
-
             font-size:11px; font-weight:900; letter-spacing:1px;
-
         }
-
         .police-card{
-
             background:linear-gradient(135deg, rgba(14,165,233,.18), rgba(14,165,233,.05));
-
             border:2px solid #38bdf8;
-
             border-radius:18px;
-
             box-shadow:0 0 20px rgba(56,189,248,.2);
-
         }
-
         .police-card.used{
-
             opacity:.6;
-
             border-color:#475569;
-
             box-shadow:none;
-
         }
-
         .my-clue-bar{
-
             background:#090e15;
-
             border:1px solid #223956;
-
             border-radius:14px;
-
             padding:10px 12px;
-
         }
-
     </style>
-
 </head>
-
 <body class="min-h-screen p-3 flex flex-col items-center justify-start max-w-md mx-auto select-none">
 
-
-
     <div id="timer-bar" class="w-full bg-[#1b2b42]/95 border-2 border-[#b8860b]/40 rounded-2xl p-4 mb-4 flex justify-between items-center hidden shadow-2xl">
-
         <div class="flex items-center space-x-2.5">
-
             <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
-
             <span class="text-sm font-black text-[#adbac7] tracking-wider">⏱️ 실시간 알리바이 수사 중</span>
-
         </div>
-
         <span id="global-timer" class="font-orbitron text-2xl font-black text-[#e0a96d] drop-shadow-[0_0_8px_rgba(224,169,109,0.5)]">05:00</span>
-
     </div>
-
-
 
     <!-- 🔁 라운드 표시 + 📌 내 단서 상단 고정바 (수사기록지 진입 후 항상 노출) -->
-
     <div id="my-clue-bar" class="my-clue-bar w-full mb-4 hidden space-y-2">
-
         <div class="flex items-center justify-between">
-
             <span id="round-pill" class="round-pill">🔁 1라운드</span>
-
             <span id="display-my-name-top" class="text-xs bg-[#142337] text-[#e0a96d] font-black px-3 py-1 rounded-lg border border-[#223956]"></span>
-
         </div>
-
         <div class="grid grid-cols-3 gap-1.5 text-[10px]">
-
             <div class="bg-[#142337] p-1.5 rounded-lg border border-[#223956] text-center"><span class="text-gray-500 block">학년</span><span class="reveal-grade-pin text-white font-bold"></span></div>
-
             <div class="bg-[#142337] p-1.5 rounded-lg border border-[#223956] text-center"><span class="text-gray-500 block">취미</span><span class="reveal-hobby-pin text-white font-bold"></span></div>
-
             <div class="bg-[#142337] p-1.5 rounded-lg border border-[#223956] text-center"><span class="text-gray-500 block">능력</span><span class="reveal-skill-pin text-white font-bold"></span></div>
-
         </div>
-
         <div class="bg-[#142337] p-1.5 rounded-lg border border-[#223956] text-center text-[10px]">
-
             <span class="text-gray-500">장래희망: </span><span class="reveal-job-pin text-white font-bold"></span>
-
         </div>
-
     </div>
-
-
 
     <div class="w-full space-y-4 flex-1 flex flex-col justify-center">
-
         <!-- 1단계: 로그인 -->
-
         <div id="step-login" class="bg-[#101b2b] border-2 border-[#223956] rounded-3xl p-6 text-center space-y-6 shadow-2xl w-full">
-
             <div class="space-y-2">
-
                 <div class="text-3xl">🕵️‍♂️</div>
-
                 <h1 class="text-2xl font-black font-orbitron text-[#e0a96d] tracking-widest">DETECTIVE MAFIA</h1>
-
                 <p class="text-xs text-[#adbac7] font-medium leading-relaxed">경찰청 데이터베이스 동기화를 위해<br>본인의 한국어 이름을 정확히 입력하세요.</p>
-
             </div>
-
             <div class="space-y-4">
-
                 <input type="text" id="student-name" class="w-full bg-[#090e15] border-2 border-[#2a476c] rounded-2xl p-4 text-white text-center font-black text-lg focus:outline-none focus:border-[#e0a96d] transition-all placeholder-gray-600" placeholder="이름 입력 (예: 남도일)">
-
                 <button onclick="login()" class="w-full bg-gradient-to-r from-[#9b1c1c] to-[#bd2c2c] text-white font-black py-4 rounded-2xl text-base transition-all shadow-xl cursor-pointer active:scale-[0.98]">수사 동기화 시작</button>
-
             </div>
-
         </div>
-
-
 
         <!-- 2단계: 지문인식 스캐너 패드 -->
-
         <div id="step-scanner" class="bg-[#101b2b] border-2 border-[#223956] rounded-3xl p-4 hidden flex-1 flex flex-col items-center justify-between min-h-[80vh] shadow-2xl w-full">
-
             <div class="text-center pt-2">
-
                 <h2 class="text-xl font-black text-[#e0a96d] font-orbitron tracking-wider">TARGET TRACKING</h2>
-
                 <p class="text-xs text-[#adbac7]">정체 식별을 위해 지문 모양을 <span class="text-red-400 font-bold underline">3초간 꾹 누르세요.</span></p>
-
             </div>
-
             
-
             <div id="touch-zone" class="relative w-full flex-1 max-h-[58vh] bg-[#05090f] border-2 border-[#e0a96d]/30 rounded-2xl flex items-center justify-center cursor-pointer select-none overflow-hidden my-4 active:border-[#e0a96d]">
-
                 <div id="laser" class="absolute left-0 w-full h-1.5 bg-[#e0a96d] shadow-[0_0_20px_#e0a96d] hidden scanner-line z-10"></div>
-
                 <div id="progress-bar" class="absolute bottom-0 left-0 w-full bg-[#e0a96d]/15 transition-all duration-75" style="height: 0%;"></div>
-
                 
-
                 <svg class="w-full h-full max-w-[280px] max-h-[340px] text-[#e0a96d] p-4 transition-transform duration-300" viewBox="0 0 512 512" fill="currentColor">
-
                     <path d="M256,16c-38.3,0-74,13.6-101.9,38c-5.8,5.1-6.4,13.9-1.3,19.7c5.1,5.8,13.9,6.4,19.7,1.3c22.5-19.7,51.3-31,83.4-31 c67.6,0,122.7,55.1,122.7,122.7c0,16.8-3.4,33.1-10.1,48.4c-4.9,11.1,0.1,23.9,11.2,28.8c11.1,4.9,23.9-0.1,28.8-11.2 c9.2-20.9,13.9-43.2,13.9-66C422.7,91.8,347.9,16,256,16z M256,77.3c-21.5,0-41.5,7.6-57.2,21.3c-5.9,5.1-6.7,13.9-1.6,19.8 c5.1,5.9,13.9,6.7,19.8,1.6c9.9-8.6,22.5-13.4,36-13.4c52.2,0,94.7,42.5,94.7,94.7c0,23.1-8.3,44.9-23.4,61.5 c-7.8,8.6-7.1,21.9,1.5,29.7c8.6,7.8,21.9,7.1,29.7-1.5c22.8-25.1,35.3-58,35.3-92.7C390.7,137.7,330.3,77.3,256,77.3z M256,138.7 c-4.6,0-9,0.4-13.4,1.1c-11.9,2.1-19.8,13.4-17.7,25.3c2.1,11.9,13.4,19.8,25.3,17.7c2-.3,3.9-0.4,5.8-0.4c36.8,0,66.7,29.9,66.7,66.7 c0,15.5-5.3,30.2-14.9,41.4c-7.7,8.9-6.6,22.2,2.3,29.9c8.9,7.7,22.2,6.6,29.9-2.3c15.1-17.5,23.4-40.4,23.4-64.6 C362.7,186.4,314.9,138.7,256,138.7z M207.2,162c-6.1,10.4-2.5,23.8,7.9,29.9c25.4,14.8,40.9,42.3,40.9,71.8c0,46.7-38,84.7-84.7,84.7 c-27.1,0-52.1-12.7-68-34.6c-7.1,9.7-15.6,18.1-25.3,25c21.8,28.6,56.1,45.6,93.3,45.6c66.6,0,120.7-54.1,120.7-120.7 c0-41.9-22-81.1-58.1-102.1C223.1,155.6,209.6,155.9,207.2,162z M157.3,194.7c-11.3,4.3-17,17.1-12.7,28.4c1.1,2.8,2.8,5.4,5.1,7.4 c10.3,9.1,16.3,22.1,16.3,36c0,27-21.9,48.9-48.9,48.9c-11.7,0-22.9-4.2-31.8-11.7c-9.2-7.8-22.5-6.6-30.3,2.7 c-7.8,9.2-6.6,22.5,2.7,30.3c16.3,13.8,37.1,21.4,59.3,21.4c48.8,0,88.5-39.7,88.5-88.5c0-24.8-10.9-48-29.8-63.7 C178,199.6,166.7,191.1,157.3,194.7z"/>
-
                 </svg>
-
             </div>
-
             
-
             <div class="pb-2">
-
                 <p id="scan-status" class="text-sm font-black text-[#adbac7]">지문 판독 센서 대기 중...</p>
-
             </div>
-
         </div>
-
-
 
         <!-- 3단계: 빌드업 연출 -->
-
         <div id="step-buildup" class="bg-[#090e15] border-2 border-[#223956] rounded-3xl p-12 text-center hidden flex-col items-center justify-center min-h-[400px] shadow-2xl">
-
             <span class="w-4 h-4 rounded-full bg-red-600 animate-ping mb-6"></span>
-
             <h2 class="text-2xl font-black text-white tracking-widest animate-pulse">사건 파일 매칭 중...</h2>
-
         </div>
-
-
 
         <!-- 4단계: 정체 최초 확인 창 -->
-
         <div id="step-reveal" class="bg-[#101b2b] border-2 border-red-900/50 rounded-3xl p-5 hidden space-y-5 shadow-2xl">
-
             <div class="text-center space-y-2">
-
                 <h2 id="role-title" class="text-2xl font-black px-6 py-4 rounded-2xl inline-block font-orbitron tracking-wide shadow-2xl border-2">🚨 프로필 로드</h2>
-
                 <p class="text-sm text-red-500 font-black animate-pulse">⚠️ 주의: 역할이 노출되지 않게 한 손으로 가리세요!</p>
-
             </div>
-
             
-
             <div class="bg-[#090e15] border border-[#223956] rounded-xl p-4 space-y-2.5 shadow-inner">
-
                 <h3 class="text-[#e0a96d] text-xs font-black flex items-center">🔍 내 수사 파일 (친구 질문 시 대답할 것)</h3>
-
                 <div class="grid grid-cols-2 gap-2 text-xs">
-
                     <div class="bg-[#142337] p-2.5 rounded-lg border border-[#223956]"><span class="text-gray-400 block text-[10px] mb-0.5">학년</span><span class="reveal-grade text-white font-bold text-sm"></span></div>
-
                     <div class="bg-[#142337] p-2.5 rounded-lg border border-[#223956]"><span class="text-gray-400 block text-[10px] mb-0.5">취미</span><span class="reveal-hobby text-white font-bold text-sm"></span></div>
-
                     <div class="bg-[#142337] p-2.5 rounded-lg border border-[#223956]"><span class="text-gray-400 block text-[10px] mb-0.5">희망 능력</span><span class="reveal-skill text-white font-bold text-sm"></span></div>
-
                     <div class="bg-[#142337] p-2.5 rounded-lg border border-[#223956] col-span-2"><span class="text-gray-400 block text-[10px] mb-0.5">장래희망 (중국어 한자 & 병음)</span><span class="reveal-job text-white font-bold text-sm leading-tight"></span></div>
-
                 </div>
-
             </div>
-
             <p id="role-tip" class="text-xs text-[#f0f6fc] bg-[#1b2b42] p-3.5 rounded-xl border border-[#223956] leading-relaxed font-semibold shadow-sm"></p>
-
             <button onclick="goInvestigation()" class="w-full bg-gradient-to-r from-[#e0a96d] to-[#b8860b] text-slate-900 font-black py-4 rounded-2xl text-base shadow-lg cursor-pointer">🕶️ 정체 확인 완료 (화면 감추기)</button>
-
         </div>
-
-
 
         <!-- 5단계: 세로 수사 기록지 -->
-
         <div id="step-sheet" class="bg-[#101b2b] border-2 border-[#223956] rounded-3xl p-4 hidden space-y-5 shadow-2xl">
-
             <div class="border-b border-[#223956] pb-2 flex justify-between items-center">
-
                 <h1 class="text-base font-black text-white tracking-tight flex items-center">🔎 명탐정 수사기록지</h1>
-
                 <span id="display-my-name" class="text-xs bg-[#090e15] text-[#e0a96d] font-black px-3 py-1 rounded-lg border border-[#223956]"></span>
-
             </div>
-
-
 
             <!-- ⚡ 경찰 전용 능력 카드: 1라운드 조사 중 1회만 용의자 1명을 지정해 진짜 단서 1개를 확인 -->
-
             <div id="police-ability-card" class="police-card p-3.5 space-y-2.5 hidden">
-
                 <h3 class="text-xs font-black text-cyan-300 flex items-center">
-
                     <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5"></span> ⚡ 경찰 능력: 진짜 단서 확인 (라운드당 1회)
-
                 </h3>
-
                 <div class="flex items-center gap-2">
-
                     <select id="police-target-select" class="bg-[#142337] border border-[#223956] rounded-lg p-2 flex-1 text-white font-bold text-xs focus:outline-none">
-
                         <option value="">용의자 선택</option>
-
                     </select>
-
                     <button onclick="usePoliceAbility()" id="police-use-btn" class="bg-cyan-700 hover:bg-cyan-600 text-white font-black px-3 py-2 rounded-lg text-xs cursor-pointer shadow-md whitespace-nowrap">확인 요청</button>
-
                 </div>
-
                 <p id="police-result-box" class="hidden text-xs bg-[#05090f] border border-cyan-700/40 rounded-lg p-2.5 font-bold text-cyan-200"></p>
-
             </div>
-
-
 
             <div class="space-y-4">
-
                 <div class="flex justify-between items-center">
-
                     <h2 class="text-xs font-black text-gray-300 tracking-wider flex items-center">
-
                         <span class="w-1.5 h-1.5 rounded-full bg-[#e0a96d] mr-1.5"></span> [활동 1] 알리바이 추리 메모 (최대 8명 조율)
-
                     </h2>
-
                     <button onclick="addInterviewCard()" class="bg-[#1b2b42] text-[#e0a96d] font-black px-2.5 py-1.5 rounded-xl text-[11px] border border-[#223956] cursor-pointer">
-
                         + 용의자 추가
-
                     </button>
-
                 </div>
-
                 <div id="interview-card-container" class="space-y-3"></div>
-
             </div>
-
-
 
             <div class="bg-[#090e15] p-3.5 rounded-2xl border border-[#223956] space-y-3">
-
                 <h3 class="text-xs font-black text-red-400 flex items-center">
-
                     <span class="w-1.5 h-1.5 rounded-full bg-red-400 mr-1.5"></span> [활동 2] 마피아 캐릭터 즉결 지목 (최대 3명 터치 선택)
-
                 </h3>
-
                 <div id="vote-checkboxes-grid" class="grid grid-cols-4 gap-2 pt-1"></div>
-
             </div>
-
-
 
             <button onclick="submitInvestigation()" class="w-full bg-gradient-to-r from-[#9b1c1c] to-[#bd2c2c] text-white font-black py-4 rounded-2xl text-base shadow-xl cursor-pointer">🎯 수사 자료 제출 (제출 완료)</button>
-
         </div>
-
     </div>
-
-
 
     <!-- 법정 재판 및 사망 모달 구조 유지 -->
-
     <div id="modal-court" class="fixed inset-0 bg-black/92 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
-
         <div class="bg-[#101b2b] border-2 border-red-900 rounded-3xl p-5 text-center space-y-5 max-w-xs w-full shadow-2xl">
-
             <div class="space-y-1">
-
                 <span class="text-3xl block animate-bounce">🕵️‍♂️</span>
-
                 <h2 class="text-lg font-black text-red-500 font-orbitron tracking-wider">법정 배심원 즉결 심사</h2>
-
                 <span id="court-progress-badge" class="inline-block text-[10px] bg-red-950 text-red-400 px-2.5 py-0.5 rounded-full font-black border border-red-900/40">용의자 1/1</span>
-
             </div>
-
             <div class="bg-[#090e15] p-4 rounded-xl border border-[#223956] shadow-inner">
-
                 <span class="text-[10px] text-gray-400 font-black block mb-0.5">피의 기소 대상 학생</span>
-
                 <span id="current-suspect-focus-name" class="text-2xl font-black text-white tracking-wide">홍길동</span>
-
             </div>
-
             <p class="text-xs text-gray-300 font-bold leading-relaxed px-1">
-
                 위 학생이 알리바이를 위조한 마피아가 맞습니까? <br>배심원 판결을 투표해 주세요.
-
             </p>
-
             <div class="grid grid-cols-2 gap-2.5 pt-0.5">
-
                 <button onclick="handleIndividualJudgement('execute')" class="bg-gradient-to-b from-red-800 to-red-600 text-white font-black py-3 rounded-xl text-xs cursor-pointer shadow-lg">💥 처형 (処刑)</button>
-
                 <button onclick="handleIndividualJudgement('save')" class="bg-gradient-to-b from-[#1b2b42] to-[#223956] text-[#e0a96d] font-black py-3 rounded-xl text-xs cursor-pointer shadow-lg border border-[#e0a96d]/20">🌿 살리기 (救出)</button>
-
             </div>
-
         </div>
-
     </div>
-
-
 
     <div id="modal-dead" class="fixed inset-0 bg-[#090e15]/98 flex flex-col items-center justify-center z-50 hidden">
-
         <div class="text-center space-y-3 max-w-xs px-4">
-
             <span class="text-5xl block animate-pulse">👁️‍🗨️</span>
-
             <h2 class="text-2xl font-black text-red-600 font-orbitron tracking-widest">CASE CLOSED</h2>
-
             <p class="text-xs text-gray-400 font-bold leading-relaxed">당신은 즉결 재판 다수결에 의해 범인(탈락자)으로 지목되었습니다.<br>이 단말은 원천 봉쇄 처리됩니다.</p>
-
         </div>
-
     </div>
-
-
 
     <!-- 🏆 게임 종료 모달 -->
-
     <div id="modal-ended" class="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 hidden p-4">
-
         <div class="text-center space-y-4 max-w-xs px-4">
-
             <span id="ended-emoji" class="text-5xl block">🏆</span>
-
             <h2 id="ended-title" class="text-2xl font-black font-orbitron tracking-widest">게임 종료</h2>
-
             <p id="ended-subtitle" class="text-xs text-gray-300 font-bold leading-relaxed"></p>
-
             <div class="bg-[#101b2b] border border-[#223956] rounded-xl p-3">
-
                 <span class="text-[10px] text-gray-500 font-black block mb-1">🚨 마피아 명단</span>
-
                 <p id="ended-mafia-list" class="text-base font-black text-red-400"></p>
-
             </div>
-
         </div>
-
     </div>
 
-
-
     <script>
-
         const firebaseConfig = { databaseURL: "https://hanyuyouxi-default-rtdb.firebaseio.com/" };
-
         firebase.initializeApp(firebaseConfig);
-
         const db = firebase.database();
 
-
-
         let myName = "", myData = null, studentsPool = {};
-
         let scanProgress = 0, scanInterval = null;
-
         let courtSuspectsQueue = []; 
-
         let currentQueueIndex = 0;
-
         let cluesPool = { grade: [], hobby: [], skill: [], job: [] };
-
         let selectedSuspects = [];
 
-        let gameStatus = { round: 1, phase: 'investigation', winner: null };
+        // ── 라운드 / 게임결과 상태 (교사용 파일의 'round', 'gameResult' 키와 동일하게 동기화) ──
+        let currentRound = 1;
+        let gameResultData = null;
+
+        // ── signal 리스너가 페이지 로드 시점에 "과거에 저장된 값"을 즉시 한 번 받는 문제 방지 플래그 ──
+        let signalListenerReady = false;
 
         let policeCheckData = { used: false, targetName: "", revealedClue: null, round: 1 };
 
-
-
         // 🔥 학생 투표용 캐릭터 모바일 카드에 들어갈 꽉 찬 상반신 콤팩트 실루엣 SVG 개조
-
         const svgStudentCardSilhouette = `<svg viewBox="0 0 100 100" class="w-full h-full text-[#03060a] bg-[#0c1520] rounded-lg" fill="currentColor">
-
             <path d="M 50 15 C 38 15 35 24 33 34 C 23 35 15 37 5 42 C 10 44 20 44 32 44 C 31 49 30 55 35 63 C 25 66 18 70 12 76 C 18 78 22 72 32 70 C 31 78 35 83 50 83 C 65 83 69 78 68 70 C 78 72 82 78 88 76 C 82 70 75 66 65 63 C 70 55 69 49 68 44 C 80 44 90 44 95 42 C 85 37 77 35 67 34 C 65 24 62 15 50 15 Z M 15 48 C 22 48 28 46 32 44 C 33 50 36 58 40 64 C 30 67 20 72 15 78 C 12 75 13 60 15 48 Z M 85 48 C 87 60 88 75 85 78 C 80 72 70 67 60 64 C 64 58 67 50 68 44 C 72 46 78 48 85 48 Z M 35 66 C 42 68 45 74 50 80 C 55 74 58 68 65 66 C 63 74 58 84 50 88 C 42 84 37 74 35 66 Z M 12 82 C 25 84 38 85 50 85 C 62 85 75 84 88 82 C 92 89 95 96 95 100 H 5 H 5 Z"/>
-
         </svg>`;
 
-
-
         db.ref('students').on('value', (snapshot) => {
-
             studentsPool = snapshot.val() || {};
-
             if(myName && studentsPool[myName]) {
-
                 myData = studentsPool[myName];
-
                 if(!myData.isAlive) {
-
                     closeAllOverlaysForDeath();
-
                 }
-
                 refreshPinnedClueBar();
-
             }
-
         });
-
-
 
         db.ref('cluesPool').on('value', (snapshot) => {
-
             const data = snapshot.val();
-
             if(data) cluesPool = data;
-
         });
 
-
-
-        db.ref('gameStatus').on('value', (snapshot) => {
-
-            const data = snapshot.val();
-
-            if (data) {
-
-                gameStatus = data;
-
-                document.getElementById('round-pill').innerText = `🔁 ${gameStatus.round}라운드`;
-
-                if (gameStatus.phase === 'ended' && gameStatus.winner) {
-
-                    showEndedModal();
-
-                }
-
-            }
-
+        // ── 라운드 표시 동기화: 교사 파일이 쓰는 최상위 'round' 값을 직접 구독 ──
+        db.ref('round').on('value', (snapshot) => {
+            currentRound = snapshot.val() || 1;
+            document.getElementById('round-pill').innerText = `🔁 ${currentRound}라운드`;
+            renderPoliceAbilityCard();
         });
 
-
+        // ── 게임 결과 동기화: 교사 파일이 쓰는 'gameResult' 구조({mafiaWon, mafiaList:[{name,alive}]})를 그대로 사용 ──
+        db.ref('gameResult').on('value', (snapshot) => {
+            gameResultData = snapshot.val();
+        });
 
         db.ref('policeCheck').on('value', (snapshot) => {
-
             const data = snapshot.val();
-
             if (data) {
-
                 policeCheckData = data;
-
                 renderPoliceAbilityCard();
-
             }
-
         });
 
-
-
         db.ref('signal').on('value', (snapshot) => {
-
             const sig = snapshot.val();
+            const isInitialFetch = !signalListenerReady;
+            signalListenerReady = true;
+
+            // 🚫 RESET_ALL은 "방금 새로 발생한 신호"일 때만 새로고침한다.
+            //    페이지를 열 때 DB에 이미 남아있던 과거 RESET_ALL 값으로는 절대 새로고침하지 않음.
+            //    (이 가드가 없으면 reload → 재구독 → 과거값 감지 → 다시 reload 가 무한 반복됨)
+            if (sig === 'RESET_ALL') {
+                if (!isInitialFetch) location.reload();
+                return;
+            }
 
             if(sig === 'START_TIMER') document.getElementById('timer-bar').classList.remove('hidden');
 
             if(sig === 'START_COURT') {
-
                 db.ref('courtStatus/suspect').once('value', (snap) => {
-
                     if(snap.val()) initSequentialCourt(snap.val());
-
                 });
-
             }
 
-            if(sig === 'RESET_ROUND') {
-
+            // 1라운드 종료(재판 후) 또는 2라운드 시작 시 모두 수사기록지를 새로 초기화
+            if(sig === 'RESET_ROUND' || sig === 'START_ROUND2') {
                 document.getElementById('modal-court').classList.add('hidden');
-
                 rebuildInterviewSheet();
-
             }
 
-            if(sig === 'RESET_ALL') location.reload();
-
-            if(sig === 'GAME_ENDED') {
-
+            // 교사 파일이 실제로 보내는 신호명은 'GAME_OVER' (구버전 'GAME_ENDED'는 사용되지 않음)
+            if(sig === 'GAME_OVER') {
                 document.getElementById('modal-court').classList.add('hidden');
-
+                showEndedModal();
             }
-
         });
-
-
 
         db.ref('globalTimer').on('value', (snapshot) => {
-
             if(snapshot.val()) document.getElementById('global-timer').innerText = snapshot.val();
-
         });
 
-
-
         function closeAllOverlaysForDeath() {
-
             document.getElementById('modal-court').classList.add('hidden');
-
             document.getElementById('step-sheet').classList.add('hidden');
-
             document.getElementById('my-clue-bar').classList.add('hidden');
-
             document.getElementById('modal-dead').classList.remove('hidden');
-
         }
-
-
 
         function login() {
-
             myName = document.getElementById('student-name').value.trim();
-
             if(!myName || !studentsPool[myName]) { alert("등록되지 않은 이름입니다. 교사 제어판을 먼저 가동해 주세요."); return; }
-
             
-
             myData = studentsPool[myName];
-
             if(!myData.isAlive) { document.getElementById('modal-dead').classList.remove('hidden'); return; }
 
-
-
             document.getElementById('step-login').classList.add('hidden');
-
             document.getElementById('step-scanner').classList.remove('hidden');
-
             bindScannerEvents();
-
         }
-
-
 
         function bindScannerEvents() {
-
             const zone = document.getElementById('touch-zone');
-
             zone.onmousedown = startScan; zone.onmouseup = stopScan; zone.onmouseleave = stopScan;
-
             zone.ontouchstart = (e) => { e.preventDefault(); startScan(); }; 
-
             zone.ontouchend = (e) => { e.preventDefault(); stopScan(); };
-
         }
-
-
 
         function startScan() {
-
             document.getElementById('laser').classList.remove('hidden');
-
             document.getElementById('scan-status').innerText = "알리바이 데이터 코드 스캔 중...";
-
             scanInterval = setInterval(() => {
-
                 scanProgress += 5; document.getElementById('progress-bar').style.height = `${scanProgress}%`;
-
                 if(scanProgress >= 100) { clearInterval(scanInterval); triggerBuildup(); }
-
             }, 150);
-
         }
-
-
 
         function stopScan() {
-
             if(scanProgress < 100) {
-
                 clearInterval(scanInterval); scanProgress = 0;
-
                 document.getElementById('progress-bar').style.height = `0%`;
-
                 document.getElementById('laser').classList.add('hidden');
-
                 document.getElementById('scan-status').innerText = "스캔 실패! 지문을 유지하세요.";
-
             }
-
         }
-
-
 
         function triggerBuildup() {
-
             document.getElementById('step-scanner').classList.add('hidden');
-
             document.getElementById('step-buildup').classList.remove('hidden');
-
             setTimeout(() => {
-
                 document.getElementById('step-buildup').classList.add('hidden');
-
                 document.getElementById('step-reveal').classList.remove('hidden');
-
                 
-
                 document.querySelectorAll('.reveal-grade').forEach(el => el.innerText = myData.profile.grade);
-
                 document.querySelectorAll('.reveal-hobby').forEach(el => el.innerText = myData.profile.hobby);
-
                 document.querySelectorAll('.reveal-skill').forEach(el => el.innerText = myData.profile.skill);
-
                 document.querySelectorAll('.reveal-job').forEach(el => el.innerHTML = `${myData.profile.job.ko} <br><span class="text-[#e0a96d] font-bold font-mono text-[10px]">[${myData.profile.job.cn} / ${myData.profile.job.py}]</span>`);
 
-
-
                 const title = document.getElementById('role-title');
-
                 const tip = document.getElementById('role-tip');
 
-
-
                 if(myData.role === "마피아") {
-
                     title.innerText = "🚨 당신은 마피아입니다";
-
                     title.className = "text-2xl font-black bg-gradient-to-r from-red-950 to-red-950 text-red-500 border-4 border-red-600 px-6 py-4 rounded-2xl shadow-2xl animate-pulse";
-
                     tip.innerHTML = "당신의 수사 파일 정보 중 <strong class='text-red-400 underline'>딱 1개만 위조(거짓말)</strong>하여 대답해야 합니다.";
-
                 } else if(myData.role === "경찰") {
-
                     title.innerText = "⚡ 당신은 경찰입니다";
-
                     title.className = "text-2xl font-black bg-gradient-to-r from-cyan-950 to-cyan-950 text-cyan-400 border-4 border-cyan-500 px-6 py-4 rounded-2xl shadow-2xl animate-pulse";
-
                     tip.innerHTML = "당신은 무조건 <strong class='text-cyan-400'>100% 진실만을 답변</strong>해야 합니다. 또한 조사 시간 중 <strong class='text-cyan-400'>용의자 1명의 진짜 단서 1개를 확인</strong>할 수 있는 능력이 있습니다 (라운드당 1회).";
-
                 } else {
-
                     title.innerText = "👥 당신은 시민입니다";
-
                     title.className = "text-2xl font-black bg-gradient-to-r from-emerald-950 to-emerald-950 text-emerald-400 border-4 border-emerald-500 px-6 py-4 rounded-2xl shadow-2xl";
-
                     tip.innerHTML = "당신은 무조건 <strong class='text-emerald-400'>100% 진실만을 답변</strong>해야 합니다.";
-
                 }
-
             }, 2000);
-
         }
-
-
 
         function goInvestigation() {
-
             document.getElementById('display-my-name').innerText = `명탐정: ${myName}`;
-
             document.getElementById('step-reveal').innerHTML = ""; 
-
             document.getElementById('step-reveal').classList.add('hidden');
-
             document.getElementById('step-sheet').classList.remove('hidden');
-
             selectedSuspects = [];
-
             rebuildInterviewSheet();
-
             refreshPinnedClueBar();
-
         }
-
-
 
         // 📌 상단 내 단서 고정바 채우기 (게임 중 항상 노출)
-
         function refreshPinnedClueBar() {
-
             if (!myData) return;
-
             const bar = document.getElementById('my-clue-bar');
-
             const sheetVisible = !document.getElementById('step-sheet').classList.contains('hidden');
-
             if (!sheetVisible) { bar.classList.add('hidden'); return; }
-
             bar.classList.remove('hidden');
-
             document.getElementById('display-my-name-top').innerText = `명탐정: ${myName}`;
-
             document.querySelectorAll('.reveal-grade-pin').forEach(el => el.innerText = myData.profile.grade);
-
             document.querySelectorAll('.reveal-hobby-pin').forEach(el => el.innerText = myData.profile.hobby);
-
             document.querySelectorAll('.reveal-skill-pin').forEach(el => el.innerText = myData.profile.skill);
-
             document.querySelectorAll('.reveal-job-pin').forEach(el => el.innerText = `${myData.profile.job.ko} [${myData.profile.job.cn}/${myData.profile.job.py}]`);
-
         }
-
-
 
         function rebuildInterviewSheet() {
-
             const container = document.getElementById('interview-card-container'); 
-
             container.innerHTML = "";
-
             for(let i=0; i<3; i++) { addInterviewCard(); }
-
             renderCharacterGrid();
-
             renderPoliceAbilityCard();
-
             refreshPinnedClueBar();
-
         }
-
-
 
         function addInterviewCard() {
-
             const container = document.getElementById('interview-card-container');
-
             const currentCards = container.querySelectorAll('.target-name').length;
-
             if(currentCards >= 8) { alert("추리 수첩 메모는 최대 8명까지만 기입 가능합니다."); return; }
 
-
-
             let studentOpts = `<option value="">용의자 이름 선택</option>`;
-
             Object.keys(studentsPool).forEach(k => {
-
                 if(k !== myName) {
-
                     if (studentsPool[k].isAlive) studentOpts += `<option value="${k}">${k}</option>`;
-
                     else studentOpts += `<option value="${k}" disabled class="text-red-500/30 line-through">${k} [❌ 탈락]</option>`;
-
                 }
-
             });
-
             const renderOptions = (arr) => arr ? arr.map(v => `<option value="${v}">${v}</option>`).join('') : '';
-
             
-
             const card = document.createElement('div');
-
             card.className = "bg-[#090e15] border border-[#223956] rounded-xl p-3 space-y-2 text-xs shadow-md";
-
             card.innerHTML = `
-
                 <div class="flex items-center space-x-2 border-b border-[#223956] pb-1.5">
-
                     <span class="text-[#e0a96d] font-black">👤 대상:</span>
-
                     <select onchange="renderCharacterGrid()" class="bg-[#142337] border border-[#223956] rounded-lg p-2 flex-1 text-white font-bold text-xs focus:outline-none target-name">${studentOpts}</select>
-
                 </div>
-
                 <div class="grid grid-cols-2 gap-2 pt-0.5 text-gray-300">
-
                     <div class="flex items-center space-x-1">
-
                         <span class="text-[10px] text-gray-500 font-bold shrink-0">학년:</span>
-
                         <select class="bg-[#142337] border border-[#223956] rounded-lg p-2 w-full text-white text-[11px] focus:outline-none">${renderOptions(cluesPool.grade)}</select>
-
                     </div>
-
                     <div class="flex items-center space-x-1">
-
                         <span class="text-[10px] text-gray-500 font-bold shrink-0">취미:</span>
-
                         <select class="bg-[#142337] border border-[#223956] rounded-lg p-2 w-full text-white text-[11px] focus:outline-none">${renderOptions(cluesPool.hobby)}</select>
-
                     </div>
-
                     <div class="flex items-center space-x-1">
-
                         <span class="text-[10px] text-gray-500 font-bold shrink-0">능력:</span>
-
                         <select class="bg-[#142337] border border-[#223956] rounded-lg p-2 w-full text-white text-[11px] focus:outline-none">${renderOptions(cluesPool.skill)}</select>
-
                     </div>
-
                     <div class="flex items-center space-x-1">
-
                         <span class="text-[10px] text-gray-500 font-bold shrink-0">장래:</span>
-
                         <select class="bg-[#142337] border border-[#223956] rounded-lg p-2 w-full text-white text-[11px] focus:outline-none">${renderOptions(cluesPool.job)}</select>
-
                     </div>
-
                 </div>
-
             `;
-
             container.appendChild(card);
-
         }
-
-
 
         function renderCharacterGrid() {
-
             const container = document.getElementById('vote-checkboxes-grid'); 
-
             container.innerHTML = "";
-
             const targets = document.querySelectorAll('.target-name');
-
             let uniqueNames = new Set(); 
-
             targets.forEach(t => { if(t.value) uniqueNames.add(t.value); });
 
-
-
             let validSuspects = [];
-
             uniqueNames.forEach(name => {
-
                 if(studentsPool[name] && studentsPool[name].isAlive) validSuspects.push(name);
-
             });
-
-
 
             if(validSuspects.length > 8) validSuspects = validSuspects.slice(0, 8);
-
             selectedSuspects = selectedSuspects.filter(n => validSuspects.includes(n));
 
-
-
             if(validSuspects.length === 0) {
-
                 container.innerHTML = `<p class="col-span-4 text-center text-gray-500 italic text-[11px] py-4 w-full">상단 추리 수첩 메모창에 용의자를 기입하면 여기에 캐릭터 카드가 자동으로 생성됩니다.</p>`;
-
                 return;
-
             }
-
-
 
             validSuspects.forEach((name) => {
-
                 const isSelected = selectedSuspects.includes(name);
-
                 // 모바일 투표 패드 카드 형태도 여백을 최소화하여 인물 실루엣이 가득차도록 마크업 밸런스 조정
-
                 container.innerHTML += `
-
                     <div onclick="toggleCharacterSelect('${name}')" id="char-card-${name}" class="bg-[#142337] border-2 border-[#223956] rounded-xl p-0 text-center cursor-pointer transition-all flex flex-col justify-between overflow-hidden min-h-[120px] ${isSelected ? 'char-card-selected' : ''}">
-
                         <div class="w-full flex-1 flex items-end justify-center bg-[#090e15] overflow-hidden p-0 pt-2">
-
                             ${svgStudentCardSilhouette}
-
                         </div>
-
                         <span class="text-[11px] font-black text-white block truncate w-full bg-[#142337] py-1 border-t border-[#223956]/40 leading-tight">${name}</span>
-
                     </div>`;
-
             });
-
         }
-
-
 
         function toggleCharacterSelect(name) {
-
             const idx = selectedSuspects.indexOf(name);
-
             const cardEl = document.getElementById(`char-card-${name}`);
-
             if (idx > -1) {
-
                 selectedSuspects.splice(idx, 1);
-
                 if(cardEl) cardEl.classList.remove('char-card-selected');
-
             } else {
-
                 if(selectedSuspects.length >= 3) { alert("마피아 용의자는 한 번에 최대 3명까지만 동시 고발 가능합니다."); return; }
-
                 selectedSuspects.push(name);
-
                 if(cardEl) cardEl.classList.add('char-card-selected');
-
             }
-
         }
-
-
 
         function submitInvestigation() {
-
             const targetSelects = document.querySelectorAll('.target-name');
-
             let nameFilled = 0;
-
             targetSelects.forEach(s => { if(s.value) nameFilled++; });
 
-
-
             if(nameFilled < 3 || selectedSuspects.length < 1) { 
-
                 alert("최소 3명 이상의 추리 기록을 작성하고 하단 캐릭터 카드 중에서 의심되는 용의자를 1명 이상 선택해 주세요!"); 
-
                 return; 
-
             }
-
             db.ref(`rawVotes/${myName}`).set(selectedSuspects);
-
             selectedSuspects = [];
-
             document.querySelectorAll('.char-card-selected').forEach(el => el.classList.remove('char-card-selected'));
-
             alert("수사 정보 및 지목 캐릭터 정보가 교사 대시보드로 실시간 안전 전송되었습니다!");
-
         }
-
-
 
         // ⚡ 경찰 능력 카드 렌더링: 경찰 역할에게만 노출, 라운드당 1회 사용 가능
-
         function renderPoliceAbilityCard() {
-
             const card = document.getElementById('police-ability-card');
-
             if (!myData || myData.role !== '경찰') { card.classList.add('hidden'); return; }
-
             card.classList.remove('hidden');
 
-
-
             const select = document.getElementById('police-target-select');
-
-            const usedThisRound = policeCheckData.used && policeCheckData.round === gameStatus.round;
-
-
+            const usedThisRound = policeCheckData.used && policeCheckData.round === currentRound;
 
             // 용의자 셀렉트 옵션 채우기 (생존자만, 본인 제외)
-
             let opts = `<option value="">용의자 선택</option>`;
-
             Object.keys(studentsPool).forEach(k => {
-
                 if (k !== myName && studentsPool[k].isAlive) opts += `<option value="${k}">${k}</option>`;
-
             });
-
-            if (select.dataset.lastRound !== String(gameStatus.round)) {
-
+            if (select.dataset.lastRound !== String(currentRound)) {
                 select.innerHTML = opts;
-
-                select.dataset.lastRound = String(gameStatus.round);
-
+                select.dataset.lastRound = String(currentRound);
             }
-
-
 
             const resultBox = document.getElementById('police-result-box');
-
             const useBtn = document.getElementById('police-use-btn');
 
-
-
             if (usedThisRound) {
-
                 card.classList.add('used');
-
                 select.disabled = true;
-
                 useBtn.disabled = true;
-
                 useBtn.innerText = '이번 라운드 사용 완료';
-
                 if (policeCheckData.revealedClue) {
-
                     resultBox.classList.remove('hidden');
-
                     resultBox.innerText = `🎯 ${policeCheckData.targetName}의 진짜 단서 [${policeCheckData.revealedClue.type}] = ${policeCheckData.revealedClue.value}`;
-
                 }
-
             } else {
-
                 card.classList.remove('used');
-
                 select.disabled = false;
-
                 useBtn.disabled = false;
-
                 useBtn.innerText = '확인 요청';
-
                 resultBox.classList.add('hidden');
-
             }
-
         }
-
-
 
         // ⚡ 경찰이 용의자를 지정하면 시스템이 자동으로 그 용의자의 진짜 단서 1개를 공개
-
         function usePoliceAbility() {
-
-            const usedThisRound = policeCheckData.used && policeCheckData.round === gameStatus.round;
-
+            const usedThisRound = policeCheckData.used && policeCheckData.round === currentRound;
             if (usedThisRound) { alert("이번 라운드에는 이미 능력을 사용했습니다."); return; }
 
-
-
             const target = document.getElementById('police-target-select').value;
-
             if (!target || !studentsPool[target]) { alert("진짜 단서를 확인할 용의자를 선택해 주세요."); return; }
 
-
-
             const profile = studentsPool[target].profile;
-
             const clueTypes = [
-
                 { type: '학년', value: profile.grade },
-
                 { type: '취미', value: profile.hobby },
-
                 { type: '능력', value: profile.skill },
-
                 { type: '장래희망', value: `${profile.job.ko} [${profile.job.cn}/${profile.job.py}]` }
-
             ];
-
             const picked = clueTypes[Math.floor(Math.random() * clueTypes.length)];
 
-
-
             db.ref('policeCheck').set({
-
                 used: true,
-
-                round: gameStatus.round,
-
+                round: currentRound,
                 targetName: target,
-
                 requestedBy: myName,
-
                 revealedClue: { type: picked.type, value: picked.value }
-
             });
-
         }
-
-
 
         function initSequentialCourt(suspectRawString) {
-
             courtSuspectsQueue = suspectRawString.split(', ').filter(n => n.trim().length > 0);
-
             currentQueueIndex = 0;
-
             if(courtSuspectsQueue.length === 0) return;
 
-
-
             if (myName && studentsPool[myName]?.isAlive) {
-
                 renderCurrentQueueCard();
-
                 document.getElementById('modal-court').classList.remove('hidden');
-
             }
-
         }
-
-
 
         function renderCurrentQueueCard() {
-
             const currentSuspect = courtSuspectsQueue[currentQueueIndex];
-
             document.getElementById('current-suspect-focus-name').innerText = currentSuspect;
-
             document.getElementById('court-progress-badge').innerText = `용의자 판결 (${currentQueueIndex + 1} / ${courtSuspectsQueue.length})`;
-
         }
-
-
 
         function handleIndividualJudgement(choice) {
-
             const currentSuspect = courtSuspectsQueue[currentQueueIndex];
-
             db.ref(`courtVotes/${currentSuspect}/${choice}`).transaction((currentValue) => {
-
                 return (currentValue || 0) + 1;
-
             });
 
-
-
             currentQueueIndex++;
-
             if (currentQueueIndex < courtSuspectsQueue.length) {
-
                 renderCurrentQueueCard();
-
             } else {
-
                 document.getElementById('modal-court').classList.add('hidden');
-
                 alert("기소된 용의자에 대한 최종 즉결 판결이 모두 완료되었습니다.");
-
                 courtSuspectsQueue = [];
-
                 currentQueueIndex = 0;
-
             }
-
         }
 
-
-
-        // 🏆 게임 종료 모달 표시
-
+        // 🏆 게임 종료 모달 표시 (교사 파일의 'gameResult' 노드: {mafiaWon, mafiaList:[{name, alive}]})
         function showEndedModal() {
-
             document.getElementById('modal-court').classList.add('hidden');
-
             document.getElementById('step-sheet').classList.add('hidden');
-
             document.getElementById('my-clue-bar').classList.add('hidden');
-
             document.getElementById('modal-dead').classList.add('hidden');
 
-
-
             const modal = document.getElementById('modal-ended');
-
             const emoji = document.getElementById('ended-emoji');
-
             const title = document.getElementById('ended-title');
-
             const subtitle = document.getElementById('ended-subtitle');
-
             const mafiaList = document.getElementById('ended-mafia-list');
 
+            if (!gameResultData) return;
 
-
-            if (gameStatus.winner === 'mafia') {
-
+            if (gameResultData.mafiaWon) {
                 emoji.innerText = '🔴';
-
                 title.innerText = '마피아 승리';
-
                 title.className = 'text-2xl font-black font-orbitron tracking-widest text-red-500';
-
                 subtitle.innerText = '마피아 중 최소 1명이 최종 재판까지 생존했습니다.';
-
             } else {
-
                 emoji.innerText = '🟢';
-
                 title.innerText = '경찰 / 시민 승리';
-
                 title.className = 'text-2xl font-black font-orbitron tracking-widest text-emerald-400';
-
                 subtitle.innerText = '마피아 전원이 처형되어 사건이 해결되었습니다.';
-
             }
-
-            mafiaList.innerText = (gameStatus.mafiaList || []).join(', ');
-
+            mafiaList.innerText = (gameResultData.mafiaList || []).map(m => m.name).join(', ');
             modal.classList.remove('hidden');
-
         }
-
     </script>
-
 </body>
-
-</html> 
-
+</html>
