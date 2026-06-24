@@ -9,1008 +9,735 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        body{
-    font-family:'Noto Sans KR',sans-serif;
-    background:
-    radial-gradient(circle at top,
-    rgba(20,40,80,.9),
-    rgba(5,10,20,1)),
-    url('https://images.unsplash.com/photo-1503435824048-a799a3a84bf7?q=80&w=2000');
-    background-size:cover;
-    background-attachment:fixed;
-    color:#f1f5f9;
-}
-        .case-header{
-    background:linear-gradient(
-        135deg,
-        rgba(19,33,58,.9),
-        rgba(27,43,66,.95)
-    );
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: radial-gradient(circle at top, rgba(20,40,80,.9), rgba(5,10,20,1)),
+                url('https://images.unsplash.com/photo-1503435824048-a799a3a84bf7?q=80&w=2000');
+            background-size: cover;
+            background-attachment: fixed;
+            color: #f1f5f9;
+        }
+        .case-header { background: linear-gradient(135deg, rgba(19,33,58,.9), rgba(27,43,66,.95)); border: 3px solid #c89b3c; border-radius: 24px; padding: 20px 30px; box-shadow: 0 0 30px rgba(200,155,60,.2); }
+        .case-header h1 { font-size: 2rem; font-weight: 900; color: #f8d36a; letter-spacing: 2px; }
+        .case-number { display: inline-block; background: #7f1d1d; color: white; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 900; letter-spacing: 2px; margin-bottom: 10px; }
+        .round-badge { display: inline-block; padding: 4px 16px; border-radius: 999px; font-size: 13px; font-weight: 900; letter-spacing: 1px; }
+        .round-badge.r1 { background: #1e3a5f; color: #60a5fa; border: 2px solid #2563eb; }
+        .round-badge.r2 { background: #3b1717; color: #f87171; border: 2px solid #dc2626; }
+        .round-badge.final { background: #1a0a2e; color: #c084fc; border: 2px solid #7c3aed; }
 
-    border:3px solid #c89b3c;
-    border-radius:24px;
-    padding:20px 30px;
-    box-shadow:0 0 30px rgba(200,155,60,.2);
-}
+        /* Fingerprint scanner */
+        .fp-scanner { position: relative; width: 100%; height: 100%; background: radial-gradient(circle at 50% 40%, #0c1a2e 0%, #060d18 70%, #03060c 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; user-select: none; touch-action: none; }
+        .fp-scanner svg { width: 62%; height: 62%; transition: filter .25s ease; filter: drop-shadow(0 0 3px rgba(56,189,248,.25)); }
+        .fp-print-path { fill: none; stroke: #3b5a78; stroke-width: 2.6; stroke-linecap: round; transition: stroke .25s ease; }
+        .fp-scanner.fp-active .fp-print-path { stroke: #38bdf8; }
+        .fp-scanner.fp-success .fp-print-path { stroke: #34d399; }
+        .fp-ring { position: absolute; width: 74%; height: 74%; border-radius: 50%; border: 2px solid rgba(56,189,248,.25); opacity: 0; transition: opacity .2s ease; }
+        .fp-scanner.fp-active .fp-ring { opacity: 1; animation: fp-pulse-ring 1.4s ease-in-out infinite; }
+        @keyframes fp-pulse-ring { 0%,100%{ transform:scale(1); border-color:rgba(56,189,248,.2); } 50%{ transform:scale(1.06); border-color:rgba(56,189,248,.55); } }
+        .fp-scanline { position: absolute; left: 8%; width: 84%; height: 3px; background: linear-gradient(90deg, transparent, #5eead4 20%, #5eead4 80%, transparent); box-shadow: 0 0 10px 2px rgba(94,234,212,.8); top: 13%; opacity: 0; pointer-events: none; }
+        .fp-scanner.fp-active .fp-scanline { opacity: 1; animation: fp-scan-move 1.15s ease-in-out infinite; }
+        @keyframes fp-scan-move { 0%{ top:13%; } 50%{ top:84%; } 100%{ top:13%; } }
+        .fp-progress-wrap { position: absolute; bottom: 0; left: 0; width: 100%; height: 8px; background: rgba(0,0,0,.45); }
+        .fp-progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#0ea5e9,#38bdf8,#5eead4); box-shadow: 0 0 8px rgba(56,189,248,.7); }
+        .fp-progress-bar.fp-animate { transition: width 2.3s linear; }
+        .fp-status-label { position: absolute; bottom: 12px; left: 0; width: 100%; text-align: center; font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #7dd3fc; text-shadow: 0 0 6px rgba(56,189,248,.8); pointer-events: none; }
+        .fp-scanner.fp-success .fp-status-label { color: #6ee7b7; text-shadow: 0 0 6px rgba(110,231,183,.8); }
+        .fp-scanner.fp-success .fp-ring { opacity: 1; border-color: rgba(52,211,153,.6); animation: none; }
+        .fp-scanner.fp-success .fp-scanline { opacity: 0; }
 
-.case-header h1{
-    font-size:2.5rem;
-    font-weight:900;
-    color:#f8d36a;
-    letter-spacing:2px;
-}
+        /* Dead player overlay */
+        .dead-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 30; border-radius: inherit; }
+        .dead-x { font-size: 5rem; color: #ef4444; font-weight: 900; text-shadow: 0 0 20px rgba(239,68,68,.8); line-height: 1; }
 
-.case-header p{
-    color:#cbd5e1;
-    margin-top:6px;
-    font-weight:700;
-}
+        /* Hint box */
+        .hint-box { background: linear-gradient(135deg, #1a0a2e, #0f0520); border: 2px solid #7c3aed; border-radius: 16px; padding: 16px 20px; }
+        .hint-box.revealed { border-color: #c084fc; background: linear-gradient(135deg, #2d1b4e, #1a0a2e); box-shadow: 0 0 20px rgba(192,132,252,.3); }
 
-.case-number{
-    display:inline-block;
-    background:#7f1d1d;
-    color:white;
-    padding:6px 14px;
-    border-radius:999px;
-    font-size:12px;
-    font-weight:900;
-    letter-spacing:2px;
-    margin-bottom:10px;
-}
-.detective-badge{
-    background:#0f172a;
-    border:2px solid #c89b3c;
-    padding:10px 18px;
-    border-radius:12px;
-    color:#f8d36a;
-    font-weight:900;
-    text-align:center;
-    margin-bottom:10px;
-}
-.round-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    background:linear-gradient(135deg,#1b2b42,#223956);
-    border:2px solid #e0a96d;
-    color:#f8d36a;
-    padding:6px 16px;
-    border-radius:999px;
-    font-size:13px;
-    font-weight:900;
-    letter-spacing:1px;
-}
-.phase-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:4px 12px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:900;
-}
-.phase-investigation{ background:rgba(56,189,248,.15); color:#7dd3fc; border:1px solid rgba(125,211,252,.4); }
-.phase-court{ background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(248,113,113,.4); }
-.phase-ended{ background:rgba(168,85,247,.15); color:#d8b4fe; border:1px solid rgba(216,180,254,.4); }
+        /* Final result */
+        .victory-mafia { background: linear-gradient(135deg, #1a0505, #2d0a0a); border: 4px solid #dc2626; }
+        .victory-police { background: linear-gradient(135deg, #051a14, #0a2d20); border: 4px solid #10b981; }
 
-@keyframes pulse-border {
-    0%, 100% {
-        border-color: rgba(239, 68, 68, 0.5);
-    }
-    50% {
-        border-color: rgba(239, 68, 68, 1);
-    }
-}
-/* 📸 범인 이미지가 대시보드를 깨뜨리지 않도록 고정 */
-#chart-container img { width: 100%; height: 100%; object-fit: cover; }
+        /* Compact layout for briefing */
+        .briefing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 100%; }
+        @media (max-width: 1024px) { .briefing-grid { grid-template-columns: 1fr; } }
 
-/* 🔍 마피아 공통 힌트 박스 */
-.hint-box{
-    background:linear-gradient(135deg, rgba(124,58,237,.18), rgba(124,58,237,.06));
-    border:2px solid #a855f7;
-    border-radius:18px;
-    padding:18px 22px;
-    box-shadow:0 0 25px rgba(168,85,247,.25);
-}
-.hint-box .hint-label{
-    color:#d8b4fe;
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:2px;
-}
-.hint-box .hint-text{
-    color:#f3e8ff;
-    font-size:1.3rem;
-    font-weight:900;
-    margin-top:4px;
-    line-height:1.4;
-}
+        .scroll-thin::-webkit-scrollbar { width: 4px; }
+        .scroll-thin::-webkit-scrollbar-track { background: #05090f; }
+        .scroll-thin::-webkit-scrollbar-thumb { background: #223956; border-radius: 2px; }
 
-/* ⚡ 경찰 단서 확인 알림 박스 */
-.police-box{
-    background:linear-gradient(135deg, rgba(14,165,233,.18), rgba(14,165,233,.06));
-    border:2px solid #38bdf8;
-    border-radius:16px;
-    padding:14px 18px;
-    box-shadow:0 0 20px rgba(56,189,248,.2);
-}
-
-/* 🔒 지문 스캐너 UI */
-.fp-scanner{
-    position:relative;
-    width:100%;
-    height:100%;
-    background:radial-gradient(circle at 50% 40%, #0c1a2e 0%, #060d18 70%, #03060c 100%);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-    cursor:pointer;
-    -webkit-user-select:none;
-    user-select:none;
-    -webkit-touch-callout:none;
-    touch-action:none;
-}
-.fp-scanner svg{
-    width:62%;
-    height:62%;
-    transition:filter .25s ease;
-    filter:drop-shadow(0 0 3px rgba(56,189,248,.25));
-}
-.fp-scanner .fp-print-path{
-    fill:none;
-    stroke:#3b5a78;
-    stroke-width:2.6;
-    stroke-linecap:round;
-    transition:stroke .25s ease;
-}
-.fp-scanner.fp-active .fp-print-path{
-    stroke:#38bdf8;
-}
-.fp-scanner.fp-success .fp-print-path{
-    stroke:#34d399;
-}
-.fp-ring{
-    position:absolute;
-    width:74%;
-    height:74%;
-    border-radius:50%;
-    border:2px solid rgba(56,189,248,.25);
-    opacity:0;
-    transition:opacity .2s ease;
-}
-.fp-scanner.fp-active .fp-ring{
-    opacity:1;
-    animation:fp-pulse-ring 1.4s ease-in-out infinite;
-}
-@keyframes fp-pulse-ring{
-    0%,100%{ transform:scale(1); border-color:rgba(56,189,248,.2); }
-    50%{ transform:scale(1.06); border-color:rgba(56,189,248,.55); }
-}
-.fp-scanline{
-    position:absolute;
-    left:8%;
-    width:84%;
-    height:3px;
-    background:linear-gradient(90deg, transparent, #5eead4 20%, #5eead4 80%, transparent);
-    box-shadow:0 0 10px 2px rgba(94,234,212,.8);
-    top:13%;
-    opacity:0;
-    pointer-events:none;
-}
-.fp-scanner.fp-active .fp-scanline{
-    opacity:1;
-    animation:fp-scan-move 1.15s ease-in-out infinite;
-}
-@keyframes fp-scan-move{
-    0%{ top:13%; }
-    50%{ top:84%; }
-    100%{ top:13%; }
-}
-.fp-progress-wrap{
-    position:absolute;
-    bottom:0;
-    left:0;
-    width:100%;
-    height:8px;
-    background:rgba(0,0,0,.45);
-}
-.fp-progress-bar{
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg,#0ea5e9,#38bdf8,#5eead4);
-    box-shadow:0 0 8px rgba(56,189,248,.7);
-}
-.fp-progress-bar.fp-animate{
-    transition:width 2.3s linear;
-}
-.fp-status-label{
-    position:absolute;
-    bottom:12px;
-    left:0;
-    width:100%;
-    text-align:center;
-    font-size:10px;
-    font-weight:900;
-    letter-spacing:1px;
-    color:#7dd3fc;
-    text-shadow:0 0 6px rgba(56,189,248,.8);
-    pointer-events:none;
-}
-.fp-scanner.fp-success .fp-status-label{ color:#6ee7b7; text-shadow:0 0 6px rgba(110,231,183,.8); }
-.fp-scanner.fp-success .fp-ring{ opacity:1; border-color:rgba(52,211,153,.6); animation:none; }
-.fp-scanner.fp-success .fp-scanline{ opacity:0; }
-
-/* 🏆 엔딩 화면 */
-.ending-overlay{
-    position:fixed; inset:0; z-index:60;
-    background:rgba(2,6,12,.95);
-    display:flex; align-items:center; justify-content:center;
-    backdrop-filter:blur(6px);
-}
-.ending-card{
-    max-width:720px; width:92%;
-    border-radius:28px;
-    padding:48px 40px;
-    text-align:center;
-    border:4px solid #c89b3c;
-    box-shadow:0 0 60px rgba(200,155,60,.35);
-}
-.ending-card.mafia-win{ background:linear-gradient(160deg, #2b0d0d, #120606); border-color:#ef4444; box-shadow:0 0 60px rgba(239,68,68,.35); }
-.ending-card.citizen-win{ background:linear-gradient(160deg, #0d2b1f, #061209); border-color:#34d399; box-shadow:0 0 60px rgba(52,211,153,.35); }
+        @keyframes pulse-glow { 0%,100%{ box-shadow:0 0 10px rgba(200,155,60,.3); } 50%{ box-shadow:0 0 25px rgba(200,155,60,.7); } }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
     </style>
 </head>
-<body class="min-h-screen p-6 flex flex-col items-center">
+<body class="min-h-screen p-4 flex flex-col items-center">
+<div class="w-full max-w-7xl space-y-4">
 
-    <div class="w-full max-w-7xl space-y-6">
-        <div class="bg-[#101b2b] border-4 border-[#b8860b]/60 rounded-3xl p-8 flex justify-between items-center shadow-2xl gap-6 flex-wrap">
-            <div class="case-header">
-    <div class="space-y-2">
-        <div class="flex items-center gap-2 flex-wrap">
-            <span class="case-number">
-            CASE FILE #2026-001
-            </span>
-            <span id="round-badge" class="round-badge">🔁 1라운드</span>
-            <span id="phase-badge" class="phase-badge phase-investigation">🔎 조사 중</span>
+    <!-- ===== HEADER ===== -->
+    <div class="bg-[#101b2b] border-4 border-[#b8860b]/60 rounded-3xl p-5 flex justify-between items-center shadow-2xl">
+        <div class="case-header">
+            <span class="case-number">CASE FILE #2026-001</span>
+            <h1>🔍 명탐정 코난 수사본부</h1>
+            <div class="flex items-center gap-3 mt-2">
+                <span id="round-badge" class="round-badge r1">📋 1라운드 수사 중</span>
+                <span id="phase-label" class="text-xs text-gray-400 font-bold">수사 대기 중</span>
+            </div>
         </div>
-        <h1>
-        🔍 명탐정 코난 수사본부
-        </h1>
+        <div class="text-right">
+            <div class="bg-[#05090f] px-6 py-3 rounded-2xl border-2 border-[#223956]">
+                <span class="text-xs text-[#e0a96d] block font-black tracking-wider">사건 종료까지</span>
+                <span id="display-timer" class="text-4xl font-black font-orbitron text-white">05:00</span>
+            </div>
+        </div>
     </div>
-</div>
-            <div class="flex items-center gap-3">
-                <div class="flex flex-col gap-2">
-                    <button onclick="startTimer()" class="bg-[#1b2b42] hover:bg-[#223956] text-[#e0a96d] font-black px-5 py-2.5 rounded-xl text-xs lg:text-sm border border-[#e0a96d]/40 cursor-pointer shadow-md active:scale-95 whitespace-nowrap">⏱️ 수사 시작</button>
-                    <button onclick="extractAllSuspects()" class="bg-red-950/50 hover:bg-red-900/70 text-red-400 font-black px-5 py-2.5 rounded-xl text-xs lg:text-sm border border-red-900/40 cursor-pointer shadow-md active:scale-95 whitespace-nowrap">⚖️ 특별 재판 개시</button>
-                </div>
-                <div class="bg-[#05090f] px-8 py-4 rounded-2xl border-2 border-[#223956] text-right">
-                    <span class="text-xs lg:text-sm text-[#e0a96d] block font-black tracking-wider">사건 종료까지</span>
-                    <span id="display-timer" class="text-4xl lg:text-5xl font-black font-orbitron text-white">05:00</span>
-                </div>
+
+    <!-- ===== SETUP REOPEN ===== -->
+    <div id="setup-reopen-bar" class="hidden">
+        <button onclick="toggleSetupVisibility()" class="bg-[#1b2b42] text-xs text-[#e0a96d] px-4 py-2 rounded-lg font-bold border border-[#e0a96d]/40 cursor-pointer shadow-md">⚙️ 설정창 열기</button>
+    </div>
+
+    <!-- ===== MAIN GRID ===== -->
+    <div id="main-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+
+        <!-- LEFT: SETUP PANEL -->
+        <div id="setup-panel" class="bg-[#101b2b] border-2 border-[#223956] rounded-2xl p-5 space-y-4 shadow-xl h-fit">
+            <div class="flex justify-between items-center border-b border-[#223956] pb-3">
+                <h2 class="text-lg font-black text-[#e0a96d]">📂 사건 파일 설정</h2>
+                <button onclick="toggleSetupVisibility()" class="bg-[#1b2b42] text-xs text-[#e0a96d] px-3 py-1.5 rounded-lg font-bold border border-[#e0a96d]/30 cursor-pointer">👁️ 숨기기</button>
             </div>
-        </div>
 
-        <!-- 🔽 설정창이 접혀있을 때 다시 펼치는 플로팅 버튼 (브리핑 보드가 풀스크린일 때 노출) -->
-        <div id="setup-reopen-bar" class="hidden">
-            <button onclick="toggleSetupVisibility()" class="bg-[#1b2b42] hover:bg-[#223956] text-xs text-[#e0a96d] px-4 py-2 rounded-lg font-bold border border-[#e0a96d]/40 cursor-pointer shadow-md">⚙️ 설정창 열기 (사건 파일 / 인원 재설정)</button>
-        </div>
-
-        <!-- 🟣 마피아 공통 힌트 박스 (라운드 종료 시 노출) -->
-        <div id="hint-panel" class="hint-box hidden">
-            <span class="hint-label">🟣 마피아 공통 힌트 공개</span>
-            <p id="hint-text" class="hint-text">힌트가 아직 공개되지 않았습니다.</p>
-        </div>
-
-        <!-- 🔵 경찰 단서 확인 알림 박스 -->
-        <div id="police-panel" class="police-box hidden">
-            <div class="flex justify-between items-center flex-wrap gap-2">
-                <span class="text-cyan-300 font-black text-sm">⚡ 경찰 능력 발동 알림</span>
-                <span id="police-result-text" class="text-white font-black text-sm"></span>
-            </div>
-        </div>
-
-        <div id="main-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            <div id="setup-panel" class="bg-[#101b2b] border-2 border-[#223956] rounded-2xl p-6 space-y-5 shadow-xl h-fit">
-                <div class="flex justify-between items-center border-b border-[#223956] pb-3">
-                    <h2 class="text-xl font-black text-[#e0a96d]">📂 사건 파일 설정</h2>
-                    <button onclick="toggleSetupVisibility()" id="btn-toggle-setup" class="bg-[#1b2b42] text-xs text-[#e0a96d] px-3 py-1.5 rounded-lg font-bold border border-[#e0a96d]/30 cursor-pointer">👁️ 설정창 숨기기</button>
+            <div class="space-y-3 text-sm font-bold">
+                <div>
+                    <label class="block text-gray-300 text-xs mb-1 font-black">👤 학생 이름 (공백/쉼표 구분)</label>
+                    <textarea id="input-students" class="w-full h-28 bg-[#05090f] border border-[#223956] rounded-xl p-3 text-white text-xs focus:outline-none focus:border-[#e0a96d]" placeholder="남도일, 유미란, 하인성, 정보라"></textarea>
                 </div>
-                
-                <div id="setup-content" class="space-y-4 text-base font-bold">
+
+                <div class="space-y-2 border-t border-b border-[#223956]/50 py-2">
+                    <span class="text-xs text-[#e0a96d] block font-black">📊 단서별 배정 인원수</span>
+                    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
+                        <label class="block text-gray-400 text-xs mb-1 font-bold">🏫 학년별</label>
+                        <div class="grid grid-cols-3 gap-1 text-xs">
+                            <div class="flex items-center gap-1"><span>1학년:</span><input type="number" id="num-grade1" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>2학년:</span><input type="number" id="num-grade2" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>3학년:</span><input type="number" id="num-grade3" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
+                        <label class="block text-gray-400 text-xs mb-1 font-bold">🎨 취미별</label>
+                        <div class="grid grid-cols-2 gap-1 text-xs">
+                            <div class="flex items-center gap-1"><span>요리하기:</span><input type="number" id="num-hobby1" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>노래부르기:</span><input type="number" id="num-hobby2" value="3" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>영상찍기:</span><input type="number" id="num-hobby3" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>영화보기:</span><input type="number" id="num-hobby4" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
+                        <label class="block text-gray-400 text-xs mb-1 font-bold">⚡ 능력별</label>
+                        <div class="grid grid-cols-3 gap-1 text-xs">
+                            <div class="flex items-center gap-1"><span>축구:</span><input type="number" id="num-skill1" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>탁구:</span><input type="number" id="num-skill2" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>농구:</span><input type="number" id="num-skill3" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
+                        <label class="block text-gray-400 text-xs mb-1 font-bold">👔 장래희망별</label>
+                        <div class="grid grid-cols-2 gap-1 text-xs">
+                            <div class="flex items-center gap-1"><span>운동선수:</span><input type="number" id="num-job1" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>의사:</span><input type="number" id="num-job2" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>인플루언서:</span><input type="number" id="num-job3" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                            <div class="flex items-center gap-1"><span>작가:</span><input type="number" id="num-job4" value="1" min="0" class="w-10 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 마피아 힌트 설정 -->
+                <div class="space-y-2 border-b border-[#223956]/50 pb-2">
+                    <span class="text-xs text-purple-400 block font-black">🔮 교사용 마피아 힌트 설정</span>
+                    <div class="bg-[#05090f] p-2 rounded-lg border border-purple-900/40 space-y-2">
+                        <div>
+                            <label class="block text-gray-400 text-xs mb-1">1라운드 후 공개 힌트</label>
+                            <input type="text" id="hint-r1" value="마피아 중 한 명의 취미는 요리하기입니다." class="w-full bg-[#101b2b] text-white text-xs p-2 rounded border border-[#223956] focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-xs mb-1">2라운드 후 공개 힌트</label>
+                            <input type="text" id="hint-r2" value="마피아 중 '노래부르기'가 포함된 사람은 총 3명입니다." class="w-full bg-[#101b2b] text-white text-xs p-2 rounded border border-[#223956] focus:outline-none focus:border-purple-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-gray-300 text-sm mb-1.5 font-black">👤 용의선상 학생 이름 기입 (공백/쉼표 구분)</label>
-                        <textarea id="input-students" class="w-full h-36 bg-[#05090f] border border-[#223956] rounded-xl p-3 text-white text-sm focus:outline-none focus:border-[#e0a96d] font-medium" placeholder="남도일, 유미란, 하인성, 정보라"></textarea>
+                        <label class="block text-red-400 text-xs mb-1 font-black">🚨 마피아 인원</label>
+                        <input type="number" id="count-mafia" value="3" min="1" class="w-full bg-[#05090f] border-2 border-[#223956] rounded-xl p-2 text-white font-black text-center text-lg focus:outline-none focus:border-red-500">
                     </div>
-                  <div class="space-y-3 border-t border-b border-[#223956]/50 py-3 text-left">
-    <span class="text-xs text-[#e0a96d] block font-black">📊 단서별 배정 인원수 설정</span>
-    
-    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
-        <label class="block text-gray-400 text-xs mb-1 font-bold">🏫 학년별 인원</label>
-        <div class="grid grid-cols-3 gap-2 text-xs">
-            <div class="flex items-center space-x-1"><span>1학년:</span><input type="number" id="num-grade1" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>2학년:</span><input type="number" id="num-grade2" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>3학년:</span><input type="number" id="num-grade3" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+                    <div>
+                        <label class="block text-cyan-400 text-xs mb-1 font-black">⚡ 경찰 인원</label>
+                        <input type="number" id="count-police" value="1" min="0" class="w-full bg-[#05090f] border-2 border-[#223956] rounded-xl p-2 text-white font-black text-center text-lg focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <button onclick="generateGameData()" class="w-full bg-gradient-to-r from-[#9b1c1c] to-[#bd2c2c] text-white font-black py-3 rounded-xl text-sm cursor-pointer shadow-md active:scale-95">🎲 사건 유포 및 역할 배분</button>
+                <button onclick="resetServerAll()" class="w-full bg-slate-800 text-gray-300 font-bold py-2 rounded-xl text-xs cursor-pointer border border-gray-600 active:scale-95">🔄 서버 전체 초기화</button>
+
+                <div class="border-t border-[#223956]/50 pt-2 space-y-2">
+                    <button onclick="startTimer()" class="w-full bg-[#1b2b42] text-[#e0a96d] font-black py-2.5 rounded-xl text-sm border border-[#e0a96d]/40 cursor-pointer active:scale-95">⏱️ 수사 시작 (타이머)</button>
+                    <button onclick="extractAllSuspects()" class="w-full bg-red-950/50 text-red-400 font-black py-2.5 rounded-xl text-sm border border-red-900/40 cursor-pointer active:scale-95">⚖️ 특별 재판 개시</button>
+                    <button onclick="advanceRound()" class="w-full bg-purple-950/50 text-purple-400 font-black py-2.5 rounded-xl text-sm border border-purple-900/40 cursor-pointer active:scale-95">⏭️ 다음 라운드 진행</button>
+                    <button onclick="endGame()" class="w-full bg-yellow-950/50 text-yellow-400 font-black py-2.5 rounded-xl text-sm border border-yellow-900/40 cursor-pointer active:scale-95">🏁 게임 종료 및 결과 발표</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: BRIEFING BOARD (스크롤 없이 한 화면) -->
+        <div id="briefing-panel" class="lg:col-span-2 space-y-4">
+
+            <!-- Top5 용의자 + 수사기록 (한 화면) -->
+            <div class="bg-[#101b2b] border border-[#223956] rounded-2xl p-4 shadow-xl" style="height:calc(100vh - 320px); min-height:420px; display:flex; flex-direction:column;">
+                <h2 class="text-lg font-black text-[#e0a96d] mb-3 flex items-center border-b border-[#223956] pb-2 shrink-0">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-600 mr-2 animate-ping"></span>
+                    📋 수사 브리핑 보드
+                </h2>
+                <div class="briefing-grid flex-1 min-h-0">
+                    <!-- Top5 용의자 -->
+                    <div class="flex flex-col min-h-0">
+                        <div class="text-xs font-black text-red-400 mb-2 shrink-0">🎯 TOP 5 용의자</div>
+                        <div id="chart-container" class="flex-1 overflow-y-auto scroll-thin space-y-2 pr-1">
+                            <p class="text-xs text-gray-500 italic text-center py-8">아직 제출된 수사기록이 없습니다.</p>
+                        </div>
+                    </div>
+                    <!-- 수사 투표 기록 -->
+                    <div class="flex flex-col min-h-0 border-l border-[#223956] pl-4">
+                        <div class="text-xs font-black text-blue-400 mb-2 shrink-0">📝 수사 투표 기록</div>
+                        <div id="vote-log-container" class="flex-1 overflow-y-auto scroll-thin space-y-1 pr-1">
+                            <p class="text-xs text-gray-500 italic text-center py-8">수사기록 제출 대기 중...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 마피아 힌트 패널 -->
+            <div class="bg-[#0d0a1a] border border-purple-900/40 rounded-2xl p-4 shadow-xl">
+                <h3 class="text-sm font-black text-purple-400 mb-3 flex items-center gap-2">
+                    🔮 교사용 마피아 공개 힌트
+                    <span class="text-xs text-gray-500 font-normal">(라운드 종료 후 공개)</span>
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div id="hint-box-r1" class="hint-box">
+                        <div class="text-xs text-purple-500 font-black mb-1">1라운드 종료 후</div>
+                        <div class="text-gray-500 text-xs font-bold italic" id="hint-r1-display">🔒 아직 잠겨 있음</div>
+                        <button onclick="revealHint(1)" class="mt-2 w-full bg-purple-900/40 hover:bg-purple-800/60 text-purple-300 text-xs font-black py-1.5 rounded-lg border border-purple-700/40 cursor-pointer">공개하기</button>
+                    </div>
+                    <div id="hint-box-r2" class="hint-box">
+                        <div class="text-xs text-purple-500 font-black mb-1">2라운드 종료 후</div>
+                        <div class="text-gray-500 text-xs font-bold italic" id="hint-r2-display">🔒 아직 잠겨 있음</div>
+                        <button onclick="revealHint(2)" class="mt-2 w-full bg-purple-900/40 hover:bg-purple-800/60 text-purple-300 text-xs font-black py-1.5 rounded-lg border border-purple-700/40 cursor-pointer">공개하기</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
-        <label class="block text-gray-400 text-xs mb-1 font-bold">🎨 취미별 인원</label>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="flex items-center space-x-1"><span>요리하기:</span><input type="number" id="num-hobby1" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>노래부르기:</span><input type="number" id="num-hobby2" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>영상찍기:</span><input type="number" id="num-hobby3" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>영화보기:</span><input type="number" id="num-hobby4" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
+    <!-- ===== COURT PANEL ===== -->
+    <div id="court-panel" class="bg-gradient-to-b from-[#2b0d0d] to-[#120606] border-4 border-[#c89b3c] rounded-3xl p-6 hidden space-y-5 shadow-2xl">
+        <div class="text-center">
+            <span class="bg-red-950 text-red-400 text-sm font-black px-5 py-2 rounded-full border border-red-900/40">⚖️ 긴급 특별 재판</span>
+            <h3 class="text-2xl font-black text-white mt-3">피의 기소자 배심원 투표 실시간 집계</h3>
+        </div>
+        <div id="court-scales-container" class="space-y-4 max-w-4xl mx-auto"></div>
+        <div class="flex justify-center pt-2">
+            <button onclick="closeCourt()" class="bg-gradient-to-r from-[#9b1c1c] to-[#bd2c2c] text-white font-black px-10 py-4 rounded-xl text-base cursor-pointer shadow-lg active:scale-95">재판 결과 최종 선포 및 처형 집행</button>
         </div>
     </div>
 
-    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
-        <label class="block text-gray-400 text-xs mb-1 font-bold">⚡ 능력별 인원</label>
-        <div class="grid grid-cols-3 gap-2 text-xs">
-            <div class="flex items-center space-x-1"><span>축구:</span><input type="number" id="num-skill1" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>탁구:</span><input type="number" id="num-skill2" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>농구:</span><input type="number" id="num-skill3" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-        </div>
+    <!-- ===== FINAL RESULT PANEL ===== -->
+    <div id="final-panel" class="hidden rounded-3xl p-8 shadow-2xl text-center space-y-6">
+        <div id="final-title" class="text-5xl font-black"></div>
+        <div id="final-subtitle" class="text-xl font-bold text-gray-300"></div>
+        <div id="final-mafia-list" class="bg-[#1a0505] border-2 border-red-800 rounded-2xl p-6 max-w-lg mx-auto"></div>
+        <button onclick="resetServerAll()" class="bg-slate-800 text-gray-300 font-bold py-3 px-8 rounded-xl text-sm cursor-pointer border border-gray-600">🔄 게임 다시 시작</button>
     </div>
 
-    <div class="bg-[#05090f] p-2 rounded-lg border border-[#223956]/40">
-        <label class="block text-gray-400 text-xs mb-1 font-bold">👔 장래희망별 인원</label>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="flex items-center space-x-1"><span>운동선수:</span><input type="number" id="num-job1" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>의사:</span><input type="number" id="num-job2" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>인플루언서:</span><input type="number" id="num-job3" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-            <div class="flex items-center space-x-1"><span>작가:</span><input type="number" id="num-job4" value="1" min="0" class="w-12 bg-[#101b2b] text-white p-1 rounded text-center"><span>명</span></div>
-        </div>
-    </div>
 </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-red-400 text-sm mb-1.5 font-black">🚨 마피아 인원</label>
-                            <input type="number" id="count-mafia" value="3" min="1" class="w-full bg-[#05090f] border-2 border-[#223956] rounded-xl p-2.5 text-white font-black text-center text-lg focus:outline-none focus:border-red-500">
-                        </div>
-                        <div>
-                            <label class="block text-cyan-400 text-sm mb-1.5 font-black">⚡ 경찰 인원</label>
-                            <input type="number" id="count-police" value="1" min="0" class="w-full bg-[#05090f] border-2 border-[#223956] rounded-xl p-2.5 text-white font-black text-center text-lg focus:outline-none focus:border-cyan-500">
-                        </div>
-                    </div>
+<script>
+const firebaseConfig = { databaseURL: "https://hanyuyouxi-default-rtdb.firebaseio.com/" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-                    <button onclick="generateGameData()" class="w-full bg-gradient-to-r from-[#9b1c1c] to-[#bd2c2c] text-white font-black py-4 rounded-xl transition-all text-sm cursor-pointer shadow-md active:scale-95">🎲 사건 유포 및 역할 배분</button>
-                    <button onclick="resetServerAll()" class="w-full bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2.5 rounded-xl text-xs cursor-pointer border border-gray-600 active:scale-95">🔄 서버 전체 데이터 초기화(RESET)</button>
-                </div>
-            </div>
+let gameState = { students: {}, round: 1 };
+let rawVotesRegistry = {};
+let courtVotesData = {};
+let currentSuspectList = [];
+let timerInterval = null;
+let currentRound = 1;
 
-            <div id="briefing-panel" class="bg-[#101b2b] border border-[#223956] rounded-2xl p-6 flex flex-col lg:col-span-2 shadow-xl">
-                <h2 class="text-xl lg:text-2xl font-black text-[#e0a96d] mb-5 flex items-center justify-between border-b border-[#223956] pb-3 flex-wrap gap-2">
-                    <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-600 mr-2.5 animate-ping"></span> 📋 Top 5 용의자 브리핑 보드</span>
-                    <span id="suspect-count-label" class="text-xs text-gray-400 font-bold"></span>
-                </h2>
-                
-                <div id="chart-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1">
-                    <p class="col-span-4 text-base text-gray-500 italic text-center py-20 font-bold">교실에서 수집된 증언과
-알리바이 분석 결과를
-실시간으로 반영합니다.</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="court-panel" class="
-bg-gradient-to-b
-from-[#2b0d0d]
-to-[#120606]
-border-4
-border-[#c89b3c]
-rounded-3xl
-p-8
-hidden
-space-y-6
-shadow-2xl
-">
-            <div class="text-center">
-                <span class="bg-red-950 text-red-400 text-sm font-black px-5 py-2 rounded-full border border-red-900/40 font-orbitron" id="court-round-label">⚖️ 1라운드 긴급 특별 재판</span>
-                <h3 class="text-3xl font-black text-white mt-4">⚖️ 피의 기소자 배심원 투표 실시간 집계 현황</h3>
-                <p class="text-sm text-gray-400 mt-2 font-bold">학생들 기기 화면에 나타난 용의자 처형/구출 판결 표수가 클라우드로 실시간 반영 중입니다.</p>
-            </div>
-            <div id="court-scales-container" class="space-y-5 max-w-4xl mx-auto"></div>
-            <div class="flex justify-center pt-3">
-                <button onclick="closeCourt()" class="bg-gradient-to-r from-[#9b1c1c] to-[#bd2c2c] text-white font-black px-10 py-4 rounded-xl text-base cursor-pointer shadow-lg active:scale-95">재판 결과 최종 선포 및 다음 단계 진행</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🏆 엔딩 오버레이 -->
-    <div id="ending-overlay" class="ending-overlay hidden">
-        <div id="ending-card" class="ending-card">
-            <div class="text-5xl mb-4" id="ending-emoji">🏆</div>
-            <h2 id="ending-title" class="text-4xl font-black text-white mb-3 font-orbitron tracking-wide">게임 종료</h2>
-            <p id="ending-subtitle" class="text-base text-gray-300 font-bold mb-6"></p>
-            <div class="bg-black/30 rounded-2xl p-5 border border-white/10 space-y-2">
-                <span class="text-xs text-gray-400 font-black tracking-widest">🚨 마피아 전체 명단 공개</span>
-                <p id="ending-mafia-list" class="text-2xl font-black text-red-400"></p>
-            </div>
-            <button onclick="closeEnding()" class="mt-6 bg-gradient-to-r from-[#e0a96d] to-[#b8860b] text-slate-900 font-black px-8 py-3 rounded-xl cursor-pointer shadow-lg active:scale-95">결과 확인 완료 (닫기)</button>
-        </div>
-    </div>
-
-    <script>
-    const firebaseConfig = { databaseURL: "https://hanyuyouxi-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let gameState = { students: {} };
-    let rawVotesRegistry = {};
-    let courtVotesData = {};
-    let currentSuspectList = [];
-    let timerInterval = null;
-    let gameStatus = { round: 1, phase: 'investigation', winner: null };
-    let cluesPoolMeta = { grade: [], hobby: [], skill: [], job: [] };
-
-    const HOBBY_LIST = ["요리하기", "노래부르기", "영상찍기", "영화보기"];
-    const GRADE_LIST = ["1학년", "2학년", "3학년"];
-    const SKILL_LIST = ["축구", "탁구", "농구"];
-    const JOB_LIST = ["운동선수", "의사", "인플루언서", "작가"];
-
-    db.ref('students').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            gameState.students = data;
-            renderChart();
-        }
-    });
-
-    db.ref('cluesPool').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) cluesPoolMeta = data;
-    });
-
-    db.ref('rawVotes').on('value', (snapshot) => {
-        rawVotesRegistry = snapshot.val() || {};
-        renderChart();
-    });
-
-    db.ref('courtVotes').on('value', (snapshot) => {
-        courtVotesData = snapshot.val() || {};
-        renderCourtScales();
-    });
-
-    db.ref('globalTimer').on('value', (snapshot) => {
-        const timeStr = snapshot.val();
-        if(timeStr) document.getElementById('display-timer').innerText = timeStr;
-    });
-
-    db.ref('courtStatus').on('value', (snapshot) => {
-        const status = snapshot.val();
-        if(status && status.active) {
-            currentSuspectList = status.suspect.split(', ').filter(n => n.trim().length > 0);
-            document.getElementById('court-panel').classList.remove('hidden');
-            document.getElementById('court-round-label').innerText = `⚖️ ${gameStatus.round}라운드 긴급 특별 재판`;
-        } else {
-            document.getElementById('court-panel').classList.add('hidden');
-        }
-    });
-
-    db.ref('gameStatus').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            gameStatus = data;
-            renderStatusBadges();
-            if (gameStatus.phase === 'ended' && gameStatus.winner) {
-                showEnding();
-            }
-        }
-    });
-
-    db.ref('mafiaHint').on('value', (snapshot) => {
-        const data = snapshot.val() || {};
-        const key = `round${gameStatus.round}`;
-        if (data[key]) {
-            document.getElementById('hint-panel').classList.remove('hidden');
-            document.getElementById('hint-text').innerText = data[key];
-        } else {
-            document.getElementById('hint-panel').classList.add('hidden');
-        }
-    });
-
-    db.ref('policeCheck').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.targetName && data.revealedClue) {
-            document.getElementById('police-panel').classList.remove('hidden');
-            document.getElementById('police-result-text').innerText =
-                `🎯 ${data.targetName} 학생의 진짜 단서 [${data.revealedClue.type}] = ${data.revealedClue.value}`;
-        } else {
-            document.getElementById('police-panel').classList.add('hidden');
-        }
-    });
-
-    function renderStatusBadges() {
-        const roundBadge = document.getElementById('round-badge');
-        const phaseBadge = document.getElementById('phase-badge');
-        roundBadge.innerText = `🔁 ${gameStatus.round}라운드`;
-
-        phaseBadge.classList.remove('phase-investigation', 'phase-court', 'phase-ended');
-        if (gameStatus.phase === 'investigation') {
-            phaseBadge.innerText = '🔎 조사 중';
-            phaseBadge.classList.add('phase-investigation');
-        } else if (gameStatus.phase === 'court') {
-            phaseBadge.innerText = '⚖️ 재판 중';
-            phaseBadge.classList.add('phase-court');
-        } else {
-            phaseBadge.innerText = '🏁 종료';
-            phaseBadge.classList.add('phase-ended');
-        }
+// ===== FIREBASE LISTENERS =====
+db.ref('students').on('value', (snap) => {
+    const data = snap.val();
+    if (data) { gameState.students = data; renderTopSuspects(); renderVoteLog(); }
+});
+db.ref('rawVotes').on('value', (snap) => {
+    rawVotesRegistry = snap.val() || {};
+    renderTopSuspects();
+    renderVoteLog();
+});
+db.ref('courtVotes').on('value', (snap) => {
+    courtVotesData = snap.val() || {};
+    renderCourtScales();
+});
+db.ref('globalTimer').on('value', (snap) => {
+    const t = snap.val();
+    if (t) document.getElementById('display-timer').innerText = t;
+});
+db.ref('courtStatus').on('value', (snap) => {
+    const s = snap.val();
+    if (s && s.active) {
+        currentSuspectList = s.suspect.split(', ').filter(n => n.trim());
+        document.getElementById('court-panel').classList.remove('hidden');
+    } else {
+        document.getElementById('court-panel').classList.add('hidden');
     }
+});
+db.ref('round').on('value', (snap) => {
+    const r = snap.val() || 1;
+    currentRound = r;
+    updateRoundDisplay();
+});
 
-    function resetServerAll() {
-        if(!confirm("서버의 모든 게임 데이터를 초기화하시겠습니까? 학생 기기도 전부 로그아웃됩니다.")) return;
-        clearInterval(timerInterval);
-        db.ref('/').set({
-            students: {},
-            cluesPool: {},
-            rawVotes: {},
-            courtVotes: {},
-            courtStatus: { active: false, suspect: "" },
-            globalTimer: "05:00",
-            gameStatus: { round: 1, phase: 'investigation', winner: null },
-            mafiaHint: {},
-            policeCheck: { used: false, targetName: "", revealedClue: null },
-            signal: "RESET_ALL"
+// ===== ROUND DISPLAY =====
+function updateRoundDisplay() {
+    const badge = document.getElementById('round-badge');
+    const phase = document.getElementById('phase-label');
+    badge.className = 'round-badge';
+    if (currentRound === 1) {
+        badge.classList.add('r1');
+        badge.textContent = '📋 1라운드 수사 중';
+        phase.textContent = '조사 시간: 5분';
+    } else if (currentRound === 2) {
+        badge.classList.add('r2');
+        badge.textContent = '🔴 2라운드 수사 중';
+        phase.textContent = '최후의 조사: 5분';
+    } else {
+        badge.classList.add('final');
+        badge.textContent = '🏁 최종 결과';
+        phase.textContent = '게임 종료';
+    }
+}
+
+// ===== TOP 5 SUSPECTS (카드형) =====
+function recalculateVotedCounts() {
+    Object.keys(gameState.students).forEach(name => {
+        gameState.students[name].votedCount = 0;
+    });
+    Object.values(rawVotesRegistry).forEach(votesArray => {
+        (Array.isArray(votesArray) ? votesArray : Object.values(votesArray)).forEach(suspectName => {
+            if (gameState.students[suspectName]) gameState.students[suspectName].votedCount++;
         });
-        document.getElementById('chart-container').innerHTML = `<p class="text-base text-gray-500 italic text-center py-20 font-bold">서버 데이터가 완전히 리셋되었습니다.</p>`;
-        document.getElementById('hint-panel').classList.add('hidden');
-        document.getElementById('police-panel').classList.add('hidden');
-        document.getElementById('ending-overlay').classList.add('hidden');
-        document.getElementById('suspect-count-label').innerText = "";
+    });
+}
 
-        // 🔼 리셋 후엔 다시 학생 명단/인원을 설정해야 하므로 설정창을 자동으로 펼침
-        const setupPanel = document.getElementById('setup-panel');
-        if (setupPanel && setupPanel.classList.contains('hidden')) {
-            toggleSetupVisibility();
-        }
+function renderTopSuspects() {
+    recalculateVotedCounts();
+    const container = document.getElementById('chart-container');
+    const list = Object.values(gameState.students)
+        .filter(s => s.votedCount > 0)
+        .sort((a, b) => b.votedCount - a.votedCount)
+        .slice(0, 5);
 
-        alert("서버 완전 리셋 완료!");
+    if (list.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-8">아직 지목된 용의자가 없습니다.</p>`;
+        return;
     }
 
-    // 🌟 선생님이 설정한 인원수를 완벽하게 반영하여 단서를 1:1 매칭 배분하는 핵심 로직
+    container.innerHTML = '';
+    list.forEach((s, idx) => {
+        const suspicion = Math.min(100, s.votedCount * 20);
+        const rankColor = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#b45309' : '#6b7280';
+        const isAlive = s.isAlive !== false;
+        container.innerHTML += `
+            <div class="bg-[#0a1628] border ${isAlive ? 'border-[#223956]' : 'border-red-900/40'} rounded-xl p-3 relative ${!isAlive ? 'opacity-50' : ''}">
+                ${!isAlive ? '<div class="absolute top-1 right-1 text-red-500 font-black text-xl">✕</div>' : ''}
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-sm font-black" style="color:${rankColor}">#${idx + 1}</span>
+                    <span class="text-white font-black text-sm flex-1">${s.name}</span>
+                    <span class="${isAlive ? 'text-emerald-400' : 'text-red-500'} text-xs font-bold">${isAlive ? '🟢 생존' : '💀 탈락'}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 bg-slate-800 rounded-full h-2">
+                        <div class="bg-red-500 h-2 rounded-full" style="width:${suspicion}%"></div>
+                    </div>
+                    <span class="text-red-400 text-xs font-black">${s.votedCount}표 (${suspicion}%)</span>
+                </div>
+                <div class="fp-scanner mt-2 rounded-lg" style="height:60px;" data-name="${s.name}">
+                    <div class="fp-ring"></div><div class="fp-scanline"></div>
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path class="fp-print-path" d="M50 15 C30 15 18 30 18 48 C18 64 26 76 36 84"/>
+                        <path class="fp-print-path" d="M50 20 C34 20 24 33 24 48 C24 60 30 70 38 78"/>
+                        <path class="fp-print-path" d="M50 25 C38 25 30 36 30 48 C30 58 35 66 41 72"/>
+                        <path class="fp-print-path" d="M50 35 C45 35 42 41 42 48 C42 53 44 57 47 60"/>
+                        <path class="fp-print-path" d="M58 18 C70 22 78 34 78 48 C78 62 70 74 58 80"/>
+                    </svg>
+                    <span class="fp-status-label">지문 스캔</span>
+                    <div class="fp-progress-wrap"><div class="fp-progress-bar"></div></div>
+                </div>
+            </div>`;
+    });
+    initFingerprintScanners();
+}
+
+// ===== VOTE LOG =====
+function renderVoteLog() {
+    const container = document.getElementById('vote-log-container');
+    const entries = Object.entries(rawVotesRegistry);
+    if (entries.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-8">수사기록 제출 대기 중...</p>`;
+        return;
+    }
+    container.innerHTML = '';
+    entries.forEach(([voter, votes]) => {
+        const voteList = Array.isArray(votes) ? votes : Object.values(votes || {});
+        container.innerHTML += `
+            <div class="bg-[#05090f] border border-[#223956]/60 rounded-lg p-2">
+                <div class="text-xs font-black text-blue-300 mb-1">🔍 ${voter}</div>
+                <div class="text-xs text-gray-400">→ ${voteList.map(v => `<span class="text-red-300 font-bold">${v}</span>`).join(', ') || '(미지목)'}</div>
+            </div>`;
+    });
+}
+
+// ===== COURT =====
+function extractAllSuspects() {
+    recalculateVotedCounts();
+    const list = Object.values(gameState.students).filter(s => s.isAlive !== false && s.votedCount > 0)
+        .sort((a, b) => b.votedCount - a.votedCount).slice(0, 5);
+    if (list.length === 0) { alert("제출된 수사기록이 없습니다."); return; }
+
+    currentSuspectList = list.map(s => s.name);
+    let initVotes = {};
+    currentSuspectList.forEach(n => { initVotes[n] = { execute: 0, save: 0 }; });
+    db.ref('courtVotes').set(initVotes);
+    db.ref('courtStatus').set({ active: true, suspect: currentSuspectList.join(', ') });
+    db.ref('signal').set('START_COURT');
+}
+
+function renderCourtScales() {
+    const container = document.getElementById('court-scales-container');
+    if (!container) return;
+    container.innerHTML = '';
+    currentSuspectList.forEach(name => {
+        const data = courtVotesData[name] || { execute: 0, save: 0 };
+        const total = data.execute + data.save || 1;
+        const exePct = (data.execute / total) * 100;
+        const savePct = (data.save / total) * 100;
+        container.innerHTML += `
+            <div class="bg-[#05090f] p-4 rounded-2xl border-2 border-[#223956] space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-white font-black text-base">👤 <span class="text-red-400 underline">${name}</span></span>
+                    <div class="flex gap-4 text-sm font-black">
+                        <span class="text-red-500">💥 처형: ${data.execute}표</span>
+                        <span class="text-[#e0a96d]">🌿 면죄: ${data.save}표</span>
+                    </div>
+                </div>
+                <div class="w-full h-5 bg-slate-950 rounded-full overflow-hidden flex border border-[#223956]">
+                    <div class="bg-gradient-to-r from-red-700 to-red-500 transition-all" style="width:${data.execute===0&&data.save===0?50:exePct}%"></div>
+                    <div class="bg-gradient-to-r from-[#1b2b42] to-[#223956] transition-all" style="width:${data.execute===0&&data.save===0?50:savePct}%"></div>
+                </div>
+            </div>`;
+    });
+}
+
+function closeCourt() {
+    let killedList = [];
+    let savedList = [];
+    currentSuspectList.forEach(name => {
+        const data = courtVotesData[name] || { execute: 0, save: 0 };
+        if (data.execute >= data.save) {
+            gameState.students[name].isAlive = false;
+            killedList.push(name);
+        } else {
+            savedList.push(name);
+        }
+    });
+
+    db.ref('students').set(gameState.students);
+    db.ref('rawVotes').set({});
+    db.ref('courtVotes').set({});
+    db.ref('courtStatus').set({ active: false, suspect: '' });
+    db.ref('signal').set('RESET_ROUND');
+
+    // 마피아 여부 공개
+    let resultMsg = '⚖️ 재판 결과\n\n';
+    killedList.forEach(name => {
+        const st = gameState.students[name];
+        const isMafia = st && st.role === '마피아';
+        resultMsg += `💀 ${name} → ${isMafia ? '🔴 마피아였습니다!' : '🔵 시민이었습니다...'}\n`;
+    });
+    if (savedList.length > 0) resultMsg += `\n🌿 생존: ${savedList.join(', ')}`;
+    alert(resultMsg);
+}
+
+// ===== HINT REVEAL =====
+function revealHint(round) {
+    const hintText = document.getElementById(`hint-r${round}`).value;
+    document.getElementById(`hint-r${round}-display`).textContent = `💡 ${hintText}`;
+    document.getElementById(`hint-r${round}-display`).className = 'text-purple-200 text-xs font-bold';
+    document.getElementById(`hint-box-r${round}`).classList.add('revealed');
+    db.ref(`hint_r${round}`).set({ text: hintText, revealed: true });
+}
+
+// ===== ROUND ADVANCE =====
+function advanceRound() {
+    if (currentRound >= 2) { alert('이미 2라운드입니다. 게임 종료 버튼을 사용하세요.'); return; }
+    if (!confirm(`1라운드를 종료하고 2라운드로 진행하시겠습니까?`)) return;
+    currentRound = 2;
+    db.ref('round').set(2);
+    db.ref('rawVotes').set({});
+    db.ref('signal').set('START_ROUND2');
+    updateRoundDisplay();
+    alert('2라운드 수사를 시작합니다! 타이머를 다시 눌러 시작하세요.');
+}
+
+// ===== GAME END =====
+function endGame() {
+    if (!confirm('게임을 종료하고 최종 결과를 발표하시겠습니까?')) return;
+
+    const allStudents = Object.values(gameState.students);
+    const mafiaList = allStudents.filter(s => s.role === '마피아');
+    const aliveMafia = mafiaList.filter(s => s.isAlive !== false);
+
+    const mafiaWon = aliveMafia.length > 0;
+
+    const finalPanel = document.getElementById('final-panel');
+    finalPanel.className = `rounded-3xl p-8 shadow-2xl text-center space-y-6 ${mafiaWon ? 'victory-mafia' : 'victory-police'}`;
+    finalPanel.classList.remove('hidden');
+
+    document.getElementById('final-title').innerHTML = mafiaWon
+        ? `<span class="text-red-400">🔴 마피아의 승리!</span>`
+        : `<span class="text-emerald-400">🟢 경찰·시민의 승리!</span>`;
+
+    document.getElementById('final-subtitle').textContent = mafiaWon
+        ? `마피아 ${aliveMafia.length}명이 살아남았습니다. 사회를 지키지 못했습니다...`
+        : `마피아 ${mafiaList.length}명을 모두 검거했습니다! 정의가 승리했습니다!`;
+
+    const mafiaHtml = `
+        <div class="text-red-400 font-black text-lg mb-4">🕵️ 마피아 명단 공개</div>
+        ${mafiaList.map(m => `
+            <div class="flex items-center justify-between bg-[#2d0a0a] border border-red-900/60 rounded-xl px-4 py-3 mb-2">
+                <span class="text-white font-black">${m.name}</span>
+                <span class="${m.isAlive !== false ? 'text-red-400' : 'text-gray-500'} font-black text-sm">${m.isAlive !== false ? '😈 생존' : '💀 처형됨'}</span>
+            </div>`).join('')}`;
+    document.getElementById('final-mafia-list').innerHTML = mafiaHtml;
+
+    db.ref('gameResult').set({
+        mafiaWon,
+        mafiaList: mafiaList.map(m => ({ name: m.name, alive: m.isAlive !== false }))
+    });
+    db.ref('signal').set('GAME_OVER');
+
+    finalPanel.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ===== TIMER =====
+function startTimer() {
+    let sec = 300;
+    clearInterval(timerInterval);
+    db.ref('signal').set('START_TIMER');
+    timerInterval = setInterval(() => {
+        sec--;
+        if (sec <= 0) { clearInterval(timerInterval); sec = 0; }
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        db.ref('globalTimer').set(`${m}:${s}`);
+    }, 1000);
+}
+
+// ===== GAME DATA GENERATION =====
 function generateGameData() {
-            const raw = document.getElementById('input-students').value;
-            const names = raw.split(/[\s,]+/).filter(n => n.trim().length > 0);
-            const mafiaCnt = parseInt(document.getElementById('count-mafia').value) || 1;
-            const policeCnt = parseInt(document.getElementById('count-police').value) || 1;
+    const raw = document.getElementById('input-students').value;
+    const names = raw.split(/[\s,]+/).filter(n => n.trim().length > 0);
+    const mafiaCnt = parseInt(document.getElementById('count-mafia').value) || 3;
+    const policeCnt = parseInt(document.getElementById('count-police').value) || 1;
 
-            if (names.length < 3) { alert("최소 3명 이상의 학생을 기입하세요."); return; }
-            if (names.length < mafiaCnt + policeCnt) { alert("학생 수가 마피아+경찰 인원수보다 적습니다. 인원수를 다시 확인하세요."); return; }
+    if (names.length < 3) { alert('최소 3명 이상의 학생을 기입하세요.'); return; }
 
-            // 1. 학년 인원수 배열 생성
-            let gradesPool = [];
-            for(let i=0; i<(parseInt(document.getElementById('num-grade1').value)||0); i++) gradesPool.push("1학년");
-            for(let i=0; i<(parseInt(document.getElementById('num-grade2').value)||0); i++) gradesPool.push("2학년");
-            for(let i=0; i<(parseInt(document.getElementById('num-grade3').value)||0); i++) gradesPool.push("3학년");
+    let gradesPool = [];
+    for(let i=0;i<(parseInt(document.getElementById('num-grade1').value)||0);i++) gradesPool.push("1학년");
+    for(let i=0;i<(parseInt(document.getElementById('num-grade2').value)||0);i++) gradesPool.push("2학년");
+    for(let i=0;i<(parseInt(document.getElementById('num-grade3').value)||0);i++) gradesPool.push("3학년");
 
-            // 2. 취미 인원수 배열 생성
-            let hobbiesPool = [];
-            for(let i=0; i<(parseInt(document.getElementById('num-hobby1').value)||0); i++) hobbiesPool.push("요리하기");
-            for(let i=0; i<(parseInt(document.getElementById('num-hobby2').value)||0); i++) hobbiesPool.push("노래부르기");
-            for(let i=0; i<(parseInt(document.getElementById('num-hobby3').value)||0); i++) hobbiesPool.push("영상찍기");
-            for(let i=0; i<(parseInt(document.getElementById('num-hobby4').value)||0); i++) hobbiesPool.push("영화보기");
+    let hobbiesPool = [];
+    for(let i=0;i<(parseInt(document.getElementById('num-hobby1').value)||0);i++) hobbiesPool.push("요리하기");
+    for(let i=0;i<(parseInt(document.getElementById('num-hobby2').value)||0);i++) hobbiesPool.push("노래부르기");
+    for(let i=0;i<(parseInt(document.getElementById('num-hobby3').value)||0);i++) hobbiesPool.push("영상찍기");
+    for(let i=0;i<(parseInt(document.getElementById('num-hobby4').value)||0);i++) hobbiesPool.push("영화보기");
 
-            // 3. 능력 인원수 배열 생성
-            let skillsPool = [];
-            for(let i=0; i<(parseInt(document.getElementById('num-skill1').value)||0); i++) skillsPool.push("축구");
-            for(let i=0; i<(parseInt(document.getElementById('num-skill2').value)||0); i++) skillsPool.push("탁구");
-            for(let i=0; i<(parseInt(document.getElementById('num-skill3').value)||0); i++) skillsPool.push("농구");
+    let skillsPool = [];
+    for(let i=0;i<(parseInt(document.getElementById('num-skill1').value)||0);i++) skillsPool.push("축구");
+    for(let i=0;i<(parseInt(document.getElementById('num-skill2').value)||0);i++) skillsPool.push("탁구");
+    for(let i=0;i<(parseInt(document.getElementById('num-skill3').value)||0);i++) skillsPool.push("농구");
 
-            // 4. 장래희망 직업 인원수 배열 생성 (학생 앱 인식 전용 데이터 구조)
-            const jobsDefs = [
-                { cn: "运动选手", py: "yùndòng xuǎnshǒu", ko: "운동선수" },
-                { cn: "医生", py: "yīshēng", ko: "의사" },
-                { cn: "网络红人", py: "wǎngluò hóngrén", ko: "인플루언서" },
-                { cn: "作家", py: "zuòjiā", ko: "작가" }
-            ];
-            let jobsPool = [];
-            for(let i=0; i<(parseInt(document.getElementById('num-job1').value)||0); i++) jobsPool.push(jobsDefs[0]);
-            for(let i=0; i<(parseInt(document.getElementById('num-job2').value)||0); i++) jobsPool.push(jobsDefs[1]);
-            for(let i=0; i<(parseInt(document.getElementById('num-job3').value)||0); i++) jobsPool.push(jobsDefs[2]);
-            for(let i=0; i<(parseInt(document.getElementById('num-job4').value)||0); i++) jobsPool.push(jobsDefs[3]);
+    const jobsDefs = [
+        { cn:"运动选手", py:"yùndòng xuǎnshǒu", ko:"운동선수" },
+        { cn:"医生", py:"yīshēng", ko:"의사" },
+        { cn:"网络红人", py:"wǎngluò hóngrén", ko:"인플루언서" },
+        { cn:"作家", py:"zuòjiā", ko:"작가" }
+    ];
+    let jobsPool = [];
+    for(let i=0;i<(parseInt(document.getElementById('num-job1').value)||0);i++) jobsPool.push(jobsDefs[0]);
+    for(let i=0;i<(parseInt(document.getElementById('num-job2').value)||0);i++) jobsPool.push(jobsDefs[1]);
+    for(let i=0;i<(parseInt(document.getElementById('num-job3').value)||0);i++) jobsPool.push(jobsDefs[2]);
+    for(let i=0;i<(parseInt(document.getElementById('num-job4').value)||0);i++) jobsPool.push(jobsDefs[3]);
 
-            // 5. 단서 셔플
-            gradesPool.sort(() => Math.random() - 0.5);
-            hobbiesPool.sort(() => Math.random() - 0.5);
-            skillsPool.sort(() => Math.random() - 0.5);
-            jobsPool.sort(() => Math.random() - 0.5);
+    gradesPool.sort(() => Math.random() - 0.5);
+    hobbiesPool.sort(() => Math.random() - 0.5);
+    skillsPool.sort(() => Math.random() - 0.5);
+    jobsPool.sort(() => Math.random() - 0.5);
 
-            // 6. 학생 명단 무작위 정렬
-            let shuffled = [...names].sort(() => Math.random() - 0.5);
-            let uploadData = {};
-
-            // 7. 1:1 매칭 분배 (인원수가 부족할 시 기본 방어값 작동)
-            shuffled.forEach((name, idx) => {
-                let role = "시민";
-                if(idx < mafiaCnt) role = "마피아";
-                else if(idx < mafiaCnt + policeCnt) role = "경찰";
-
-                let profile = {
-                    grade: gradesPool[idx] || "1학년",
-                    hobby: hobbiesPool[idx] || "요리하기",
-                    skill: skillsPool[idx] || "축구",
-                    job: jobsPool[idx] || jobsDefs[0]
-                };
-                uploadData[name] = { name, role, isAlive: true, profile, votedCount: 0 };
-            });
-
-            // 🔗 [핵심] 학생이 용의자를 추출할 때 Firebase와 단서 풀 데이터 규칙을 맞추기 위해 맵핑 리스트를 보정합니다.
-            const metaClues = { 
-                grade: ["1학년", "2학년", "3학년"], 
-                hobby: ["요리하기", "노래부르기", "영상찍기", "영화보기", "음악듣기"], 
-                skill: ["축구", "탁구", "농구"], 
-                job: ["운동선수", "의사", "인플루언서", "작가"] 
-            };
-
-            // 8. Firebase 클라우드 전송
-            db.ref('/').set({
-                students: uploadData,
-                cluesPool: metaClues,
-                rawVotes: {},
-                courtVotes: {},
-                courtStatus: { active: false, suspect: "" },
-                globalTimer: "05:00",
-                gameStatus: { round: 1, phase: 'investigation', winner: null },
-                mafiaHint: {},
-                policeCheck: { used: false, targetName: "", revealedClue: null },
-                signal: "INIT"
-            });
-            alert("수사망 가동 완료! UI 깨짐 방지 및 학생용 기기 연동 필터 보정이 완료되었습니다.");
-
-            // 🔽 역할 배분이 끝났으니 설정창을 접고 브리핑 보드를 풀스크린으로 전환 (학생용 메인 화면)
-            const setupPanel = document.getElementById('setup-panel');
-            if (setupPanel && !setupPanel.classList.contains('hidden')) {
-                toggleSetupVisibility();
+    let shuffled = [...names].sort(() => Math.random() - 0.5);
+    let uploadData = {};
+    shuffled.forEach((name, idx) => {
+        let role = '시민';
+        if (idx < mafiaCnt) role = '마피아';
+        else if (idx < mafiaCnt + policeCnt) role = '경찰';
+        uploadData[name] = {
+            name, role, isAlive: true, votedCount: 0,
+            profile: {
+                grade: gradesPool[idx] || "1학년",
+                hobby: hobbiesPool[idx] || "요리하기",
+                skill: skillsPool[idx] || "축구",
+                job: jobsPool[idx] || jobsDefs[0]
             }
-        }
+        };
+    });
 
-    function startTimer() {
-        let sec = 300;
-        clearInterval(timerInterval);
-        db.ref('signal').set('START_TIMER');
-        db.ref('gameStatus/phase').set('investigation');
-        timerInterval = setInterval(() => {
-            sec--;
-            if(sec <= 0) clearInterval(timerInterval);
-            const m = String(Math.floor(sec / 60)).padStart(2, '0');
-            const s = String(sec % 60).padStart(2, '0');
-            db.ref('globalTimer').set(`${m}:${s}`);
-        }, 1000);
+    const metaClues = {
+        grade: ["1학년","2학년","3학년"],
+        hobby: ["요리하기","노래부르기","영상찍기","영화보기"],
+        skill: ["축구","탁구","농구"],
+        job: ["운동선수","의사","인플루언서","작가"]
+    };
+
+    currentRound = 1;
+    db.ref('/').set({
+        students: uploadData,
+        cluesPool: metaClues,
+        rawVotes: {},
+        courtVotes: {},
+        courtStatus: { active: false, suspect: '' },
+        globalTimer: '05:00',
+        signal: 'INIT',
+        round: 1,
+        hint_r1: { revealed: false },
+        hint_r2: { revealed: false }
+    });
+
+    // 힌트 표시 초기화
+    document.getElementById('hint-r1-display').textContent = '🔒 아직 잠겨 있음';
+    document.getElementById('hint-r1-display').className = 'text-gray-500 text-xs font-bold italic';
+    document.getElementById('hint-box-r1').classList.remove('revealed');
+    document.getElementById('hint-r2-display').textContent = '🔒 아직 잠겨 있음';
+    document.getElementById('hint-r2-display').className = 'text-gray-500 text-xs font-bold italic';
+    document.getElementById('hint-box-r2').classList.remove('revealed');
+
+    updateRoundDisplay();
+    alert('수사망 가동 완료! 학생 기기로 역할이 배분되었습니다.');
+
+    const setupPanel = document.getElementById('setup-panel');
+    if (setupPanel && !setupPanel.classList.contains('hidden')) toggleSetupVisibility();
+}
+
+// ===== RESET =====
+function resetServerAll() {
+    if (!confirm('서버의 모든 게임 데이터를 초기화하시겠습니까?')) return;
+    clearInterval(timerInterval);
+    currentRound = 1;
+    db.ref('/').set({
+        students: {}, cluesPool: {}, rawVotes: {}, courtVotes: {},
+        courtStatus: { active: false, suspect: '' },
+        globalTimer: '05:00', signal: 'RESET_ALL', round: 1,
+        hint_r1: { revealed: false }, hint_r2: { revealed: false }
+    });
+    document.getElementById('final-panel').classList.add('hidden');
+    document.getElementById('hint-r1-display').textContent = '🔒 아직 잠겨 있음';
+    document.getElementById('hint-r1-display').className = 'text-gray-500 text-xs font-bold italic';
+    document.getElementById('hint-box-r1').classList.remove('revealed');
+    document.getElementById('hint-r2-display').textContent = '🔒 아직 잠겨 있음';
+    document.getElementById('hint-r2-display').className = 'text-gray-500 text-xs font-bold italic';
+    document.getElementById('hint-box-r2').classList.remove('revealed');
+    updateRoundDisplay();
+
+    const setupPanel = document.getElementById('setup-panel');
+    if (setupPanel && setupPanel.classList.contains('hidden')) toggleSetupVisibility();
+    alert('서버 완전 리셋 완료!');
+}
+
+// ===== SETUP TOGGLE =====
+function toggleSetupVisibility() {
+    const panel = document.getElementById('setup-panel');
+    const mainGrid = document.getElementById('main-grid');
+    const briefing = document.getElementById('briefing-panel');
+    const reopenBar = document.getElementById('setup-reopen-bar');
+    const isHidden = panel.classList.toggle('hidden');
+    if (isHidden) {
+        mainGrid.classList.remove('lg:grid-cols-3');
+        mainGrid.classList.add('lg:grid-cols-1');
+        briefing.classList.remove('lg:col-span-2');
+        reopenBar.classList.remove('hidden');
+    } else {
+        mainGrid.classList.add('lg:grid-cols-3');
+        mainGrid.classList.remove('lg:grid-cols-1');
+        briefing.classList.add('lg:col-span-2');
+        reopenBar.classList.add('hidden');
     }
+}
 
-    function recalculateVotedCounts() {
-        Object.keys(gameState.students).forEach(name => {
-            gameState.students[name].votedCount = 0;
-        });
-        Object.values(rawVotesRegistry).forEach(votesArray => {
-            votesArray.forEach(suspectName => {
-                if (gameState.students[suspectName]) {
-                    gameState.students[suspectName].votedCount++;
-                }
-            });
-        });
-    }
+// ===== FINGERPRINT SCANNERS =====
+const FP_SCAN_DURATION = 2300;
+function initFingerprintScanners() {
+    document.querySelectorAll('.fp-scanner').forEach(scanner => {
+        if (scanner.dataset.fpBound === '1') return;
+        scanner.dataset.fpBound = '1';
+        let pressTimer = null, completed = false;
+        const bar = scanner.querySelector('.fp-progress-bar');
+        const label = scanner.querySelector('.fp-status-label');
 
-    // 🏆 Top5 추출 (동률자는 모두 포함하므로 5명을 초과할 수 있음)
-    function getTop5Suspects(list) {
-        const voted = list.filter(s => s.votedCount > 0).sort((a, b) => b.votedCount - a.votedCount);
-        if (voted.length <= 5) return voted;
-        const fifthScore = voted[4].votedCount;
-        return voted.filter(s => s.votedCount >= fifthScore);
-    }
-
-    function renderChart() {
-        recalculateVotedCounts();
-        const container = document.getElementById('chart-container');
-        container.innerHTML = "";
-        const list = Object.values(gameState.students);
-        if(list.length === 0) return;
-
-        // 🔍 Top5(동률 포함) 용의자만 브리핑 보드에 노출
-        const visibleList = getTop5Suspects(list);
-        const label = document.getElementById('suspect-count-label');
-
-        if (visibleList.length === 0) {
-            container.innerHTML = `<p class="col-span-2 sm:col-span-4 text-base text-gray-500 italic text-center py-20 font-bold">아직 지목된 용의자가 없습니다.<br>학생들의 알리바이 수사 제출을 기다리는 중...</p>`;
-            label.innerText = "";
-            return;
-        }
-
-        label.innerText = `🎯 상위 ${visibleList.length}명 노출 중 (동률 포함)`;
-
-        visibleList.forEach((s, idx) => {
-            const suspicion = Math.min(100, s.votedCount * 25);
-            const statusBadge = s.isAlive
-                ? `<span class="text-emerald-400 font-extrabold text-[11px] bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">🟢 생존</span>`
-                : `<span class="text-red-500 font-extrabold text-[11px] bg-red-950/60 px-2 py-0.5 rounded border border-red-900 line-through">💀 탈락</span>`;
-
-            container.innerHTML += `
-                <div class="bg-[#efe5cf] border-4 border-[#b08a42] rounded-xl overflow-hidden shadow-2xl relative flex flex-col h-full">
-                    <div class="absolute top-1.5 left-1.5 z-20">${statusBadge}</div>
-                    <div class="absolute top-1.5 right-1.5 bg-red-800 text-white font-black text-[10px] px-2 py-0.5 rounded rotate-12 z-20">WANTED</div>
-                    <div class="w-full aspect-[3/4] overflow-hidden">
-                        <div class="fp-scanner" data-name="${s.name}">
-                            <div class="fp-ring"></div>
-                            <div class="fp-scanline"></div>
-                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                                <path class="fp-print-path" d="M50 15 C30 15 18 30 18 48 C18 64 26 76 36 84"/>
-                                <path class="fp-print-path" d="M50 20 C34 20 24 33 24 48 C24 60 30 70 38 78"/>
-                                <path class="fp-print-path" d="M50 25 C38 25 30 36 30 48 C30 58 35 66 41 72"/>
-                                <path class="fp-print-path" d="M50 30 C42 30 36 39 36 48 C36 55 39 61 44 66"/>
-                                <path class="fp-print-path" d="M50 35 C45 35 42 41 42 48 C42 53 44 57 47 60"/>
-                                <path class="fp-print-path" d="M58 18 C70 22 78 34 78 48 C78 62 70 74 58 80"/>
-                                <path class="fp-print-path" d="M58 26 C66 29 72 38 72 48 C72 58 66 67 58 72"/>
-                                <path class="fp-print-path" d="M58 34 C63 37 66 42 66 48 C66 54 63 59 58 63"/>
-                            </svg>
-                            <span class="fp-status-label">손가락을 길게 눌러 스캔</span>
-                            <div class="fp-progress-wrap"><div class="fp-progress-bar"></div></div>
-                        </div>
-                    </div>
-                    <div class="bg-[#f8f1df] px-3 py-2.5 text-center border-t border-[#d4c2a1] flex-1 flex flex-col justify-center gap-1.5 min-h-0">
-                        <div class="text-[#111827] text-base font-black truncate">${s.name}</div>
-                        <div class="font-black text-red-500 text-xs">🎯 ${s.votedCount} 표 누적</div>
-                        <div>
-                            <div class="text-[10px] font-black text-red-500">🚨 의심도 ${suspicion}%</div>
-                            <div class="w-full bg-slate-300 rounded-full h-2 mt-1">
-                                <div class="bg-red-600 h-2 rounded-full" style="width:${suspicion}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        initFingerprintScanners();
-    }
-
-    function extractAllSuspects() {
-        recalculateVotedCounts();
-        const list = Object.values(gameState.students).filter(s => s.isAlive);
-        const top5 = getTop5Suspects(list);
-        if(top5.length === 0) { alert("제출된 알리바이 수사 기록 패킷이 전무합니다."); return; }
-
-        currentSuspectList = top5.map(s => s.name);
-        let initCourtVotes = {};
-        currentSuspectList.forEach(name => { initCourtVotes[name] = { execute: 0, save: 0 }; });
-
-        db.ref('courtVotes').set(initCourtVotes);
-        const suspectString = currentSuspectList.join(', ');
-        db.ref('courtStatus').set({ active: true, suspect: suspectString, round: gameStatus.round });
-        db.ref('gameStatus/phase').set('court');
-        db.ref('signal').set('START_COURT');
-
-        // 🟣 재판 시작 시점에 해당 라운드의 마피아 공통 힌트를 자동 생성하여 공개
-        generateAndRevealMafiaHint(gameStatus.round);
-    }
-
-    // 🟣 마피아들의 실제 단서를 분석해 공통 힌트 문장을 자동 생성
-    function generateAndRevealMafiaHint(round) {
-        const mafiaList = Object.values(gameState.students).filter(s => s.role === '마피아');
-        if (mafiaList.length === 0) return;
-
-        let hintText = "";
-        if (round === 1) {
-            // 1라운드 힌트: 마피아 중 특정 취미를 가진 인원 수
-            const hobbyCounts = {};
-            HOBBY_LIST.forEach(h => hobbyCounts[h] = 0);
-            mafiaList.forEach(m => { if(hobbyCounts[m.profile.hobby] !== undefined) hobbyCounts[m.profile.hobby]++; });
-            // 가장 특징적인(0이 아니면서 전체보다 적은) 취미를 골라 힌트화. 전부 같으면 그 취미로.
-            const picked = Object.entries(hobbyCounts).filter(([k,v]) => v > 0).sort((a,b) => b[1]-a[1])[0];
-            if (picked) {
-                hintText = `🟣 마피아 중 취미가 '${picked[0]}'인 사람은 총 ${picked[1]}명입니다.`;
-            }
-        } else {
-            // 2라운드 힌트: 마피아 중 특정 학년/능력 등 다른 축으로 힌트 제공
-            const skillCounts = {};
-            SKILL_LIST.forEach(sk => skillCounts[sk] = 0);
-            mafiaList.forEach(m => { if(skillCounts[m.profile.skill] !== undefined) skillCounts[m.profile.skill]++; });
-            const picked = Object.entries(skillCounts).filter(([k,v]) => v > 0).sort((a,b) => b[1]-a[1])[0];
-            if (picked) {
-                hintText = `🟣 마피아 중 희망 능력이 '${picked[0]}'인 사람은 총 ${picked[1]}명입니다.`;
-            }
-        }
-
-        if (hintText) {
-            db.ref(`mafiaHint/round${round}`).set(hintText);
-        }
-    }
-
-    function renderCourtScales() {
-        const container = document.getElementById('court-scales-container');
-        if(!container) return;
-        container.innerHTML = "";
-
-        currentSuspectList.forEach(name => {
-            const data = courtVotesData[name] || { execute: 0, save: 0 };
-            const total = data.execute + data.save || 1;
-            const exePct = (data.execute / total) * 100;
-            const savePct = (data.save / total) * 100;
-
-            container.innerHTML += `
-                <div class="bg-[#05090f] p-5 rounded-2xl border-2 border-[#223956] space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-white font-black text-lg lg:text-xl">👤 용의 기소자: <span class="text-red-400 underline">${name}</span></span>
-                        <div class="flex space-x-6 text-sm lg:text-base font-black">
-                            <span class="text-red-500">💥 처형: ${data.execute}표</span>
-                            <span class="text-[#e0a96d]">🌿 면죄: ${data.save}표</span>
-                        </div>
-                    </div>
-                    <div class="w-full h-6 bg-slate-950 rounded-full overflow-hidden flex border-2 border-[#223956]">
-                        <div class="bg-gradient-to-r from-red-700 to-red-500" style="width: ${data.execute === 0 && data.save === 0 ? 50 : exePct}%"></div>
-                        <div class="bg-gradient-to-r from-[#1b2b42] to-[#223956]" style="width: ${data.execute === 0 && data.save === 0 ? 50 : savePct}%"></div>
-                    </div>
-                </div>`;
-        });
-    }
-
-    // 🔒 지문 스캔 인터랙션: 길게 눌러야 진행, 떼면 즉시 초기화, 2.3초간 진행 후 성공 처리
-    const FP_SCAN_DURATION = 2300; // ms
-
-    function initFingerprintScanners() {
-        document.querySelectorAll('.fp-scanner').forEach(scanner => {
-            // 이미 바인딩된 스캐너는 중복 바인딩 방지
-            if (scanner.dataset.fpBound === '1') return;
-            scanner.dataset.fpBound = '1';
-
-            let pressTimer = null;
-            let completed = false;
-            const bar = scanner.querySelector('.fp-progress-bar');
-            const label = scanner.querySelector('.fp-status-label');
-
-            const startScan = (e) => {
-                e.preventDefault();
-                if (completed) return; // 이미 성공한 카드는 재시작 없음 (필요시 release에서 리셋 가능)
-                scanner.classList.add('fp-active');
-                label.textContent = '지문 스캔 중...';
-                bar.classList.add('fp-animate');
-                // 강제 리플로우 후 진행바 채우기 (transition 적용 보장)
-                requestAnimationFrame(() => {
-                    bar.style.width = '100%';
-                });
-
-                pressTimer = setTimeout(() => {
-                    scanner.classList.remove('fp-active');
-                    scanner.classList.add('fp-success');
-                    label.textContent = '✅ 신원 확인 완료';
-                    completed = true;
-                }, FP_SCAN_DURATION);
-            };
-
-            const cancelScan = () => {
-                if (completed) return;
-                clearTimeout(pressTimer);
+        const startScan = (e) => {
+            e.preventDefault();
+            if (completed) return;
+            scanner.classList.add('fp-active');
+            label.textContent = '지문 스캔 중...';
+            bar.classList.add('fp-animate');
+            requestAnimationFrame(() => { bar.style.width = '100%'; });
+            pressTimer = setTimeout(() => {
                 scanner.classList.remove('fp-active');
-                bar.classList.remove('fp-animate');
-                bar.style.width = '0%';
-                label.textContent = '손가락을 길게 눌러 스캔';
-            };
-
-            const resetScan = () => {
-                clearTimeout(pressTimer);
-                completed = false;
-                scanner.classList.remove('fp-active', 'fp-success');
-                bar.classList.remove('fp-animate');
-                bar.style.width = '0%';
-                label.textContent = '손가락을 길게 눌러 스캔';
-            };
-
-            scanner.addEventListener('mousedown', startScan);
-            scanner.addEventListener('touchstart', startScan, { passive: false });
-
-            scanner.addEventListener('mouseup', cancelScan);
-            scanner.addEventListener('mouseleave', cancelScan);
-            scanner.addEventListener('touchend', cancelScan);
-            scanner.addEventListener('touchcancel', cancelScan);
-
-            // 완료된 카드를 다시 눌러서 처음부터 재시도하고 싶을 때
-            scanner.addEventListener('dblclick', resetScan);
+                scanner.classList.add('fp-success');
+                label.textContent = '✅ 신원 확인 완료';
+                completed = true;
+            }, FP_SCAN_DURATION);
+        };
+        const cancelScan = () => {
+            if (completed) return;
+            clearTimeout(pressTimer);
+            scanner.classList.remove('fp-active');
+            bar.classList.remove('fp-animate');
+            bar.style.width = '0%';
+            label.textContent = '지문 스캔';
+        };
+        scanner.addEventListener('mousedown', startScan);
+        scanner.addEventListener('touchstart', startScan, { passive: false });
+        scanner.addEventListener('mouseup', cancelScan);
+        scanner.addEventListener('mouseleave', cancelScan);
+        scanner.addEventListener('touchend', cancelScan);
+        scanner.addEventListener('touchcancel', cancelScan);
+        scanner.addEventListener('dblclick', () => {
+            clearTimeout(pressTimer); completed = false;
+            scanner.classList.remove('fp-active','fp-success');
+            bar.classList.remove('fp-animate'); bar.style.width='0%';
+            label.textContent='지문 스캔';
         });
-    }
+    });
+}
 
-    function toggleSetupVisibility() {
-        const panel = document.getElementById('setup-panel');
-        const mainGrid = document.getElementById('main-grid');
-        const briefing = document.getElementById('briefing-panel');
-        const reopenBar = document.getElementById('setup-reopen-bar');
-
-        const isHidden = panel.classList.toggle('hidden');
-
-        if (isHidden) {
-            // 📋 설정창 접힘 -> 브리핑 보드 풀스크린
-            mainGrid.classList.remove('lg:grid-cols-3');
-            mainGrid.classList.add('lg:grid-cols-1');
-            briefing.classList.remove('lg:col-span-2');
-            reopenBar.classList.remove('hidden');
-        } else {
-            // ⚙️ 설정창 펼침 -> 1:2 분할 복귀
-            mainGrid.classList.add('lg:grid-cols-3');
-            mainGrid.classList.remove('lg:grid-cols-1');
-            briefing.classList.add('lg:col-span-2');
-            reopenBar.classList.add('hidden');
-        }
-    }
-
-    // ⚖️ 재판 종료 → 처형 판정 → 승리 조건 체크 → 다음 라운드 또는 게임 종료 처리
-    function closeCourt() {
-        let killedList = [];
-        let savedList = [];
-
-        currentSuspectList.forEach(name => {
-            const data = courtVotesData[name] || { execute: 0, save: 0 };
-            if(data.execute >= data.save) {
-                gameState.students[name].isAlive = false;
-                killedList.push(name);
-            } else {
-                savedList.push(name);
-            }
-        });
-
-        db.ref('students').set(gameState.students);
-        db.ref('rawVotes').set({});
-        db.ref('courtVotes').set({});
-        db.ref('courtStatus').set({ active: false, suspect: "" });
-
-        let msg = "⚖️ [ 즉결 재판 최종 판결 결과 선포 ]\n\n";
-        if(killedList.length > 0) msg += `💀 CASE OUT (추방): ${killedList.join(', ')}\n`;
-        if(savedList.length > 0) msg += `🌿 SURVIVED (생존): ${savedList.join(', ')}\n`;
-        alert(msg);
-
-        // 🏆 승리 조건 체크
-        const allMafia = Object.values(gameState.students).filter(s => s.role === '마피아');
-        const aliveMafia = allMafia.filter(s => s.isAlive);
-
-        if (aliveMafia.length === 0) {
-            // 경찰/시민 승리: 마피아 전원 처형
-            finishGame('citizen', allMafia.map(m => m.name));
-            return;
-        }
-
-        if (gameStatus.round >= 2) {
-            // 2라운드 재판까지 끝났는데 마피아가 1명이라도 생존 → 마피아 승리
-            finishGame('mafia', allMafia.map(m => m.name));
-            return;
-        }
-
-        // 아직 1라운드였고 마피아가 남아있다면 → 2라운드로 진행
-        db.ref('gameStatus').set({ round: 2, phase: 'investigation', winner: null });
-        db.ref('signal').set('RESET_ROUND');
-        document.getElementById('hint-panel').classList.add('hidden');
-    }
-
-    function finishGame(winner, mafiaNames) {
-        db.ref('gameStatus').set({ round: gameStatus.round, phase: 'ended', winner: winner, mafiaList: mafiaNames });
-        db.ref('signal').set('GAME_ENDED');
-    }
-
-    function showEnding() {
-        const overlay = document.getElementById('ending-overlay');
-        const card = document.getElementById('ending-card');
-        const emoji = document.getElementById('ending-emoji');
-        const title = document.getElementById('ending-title');
-        const subtitle = document.getElementById('ending-subtitle');
-        const mafiaListEl = document.getElementById('ending-mafia-list');
-
-        card.classList.remove('mafia-win', 'citizen-win');
-        if (gameStatus.winner === 'mafia') {
-            card.classList.add('mafia-win');
-            emoji.innerText = '🔴';
-            title.innerText = '마피아 승리!';
-            subtitle.innerText = '마피아 중 최소 1명이 최종 재판까지 생존했습니다.';
-        } else {
-            card.classList.add('citizen-win');
-            emoji.innerText = '🟢';
-            title.innerText = '경찰 / 시민 승리!';
-            subtitle.innerText = '마피아 전원이 처형되어 사건이 해결되었습니다.';
-        }
-        mafiaListEl.innerText = (gameStatus.mafiaList || []).join(', ');
-        overlay.classList.remove('hidden');
-    }
-
-    function closeEnding() {
-        document.getElementById('ending-overlay').classList.add('hidden');
-    }
-    </script>
+updateRoundDisplay();
+</script>
 </body>
 </html>
