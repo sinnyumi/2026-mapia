@@ -522,7 +522,7 @@
                 selectedSuspects.splice(idx, 1);
                 if(cardEl) cardEl.classList.remove('char-card-selected');
             } else {
-                if(selectedSuspects.length >= 1) { alert("마피아 용의자는 한 번에 최대 3명까지만 동시 고발 가능합니다."); return; }
+                if(selectedSuspects.length >= 3) { alert("마피아 용의자는 한 번에 최대 3명까지만 동시 고발 가능합니다."); return; }
                 selectedSuspects.push(name);
                 if(cardEl) cardEl.classList.add('char-card-selected');
             }
